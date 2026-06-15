@@ -8,7 +8,7 @@ A collection of **101 self-contained digital-design (RTL) challenges** you can
 solve and test entirely offline. Each challenge gives you a problem description,
 an empty module template, and a testbench. You write the hardware; a one-command
 `make` compiles it, runs the testbench, and tells you PASS/FAIL — plus a waveform
-you can inspect.
+you can inspect. 
 
 Templates are provided in **SystemVerilog/Verilog, VHDL, and TL-Verilog**, so you
 can solve in whichever language you like.
