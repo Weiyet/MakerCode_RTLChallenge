@@ -13,6 +13,8 @@ you can inspect.
 Templates are provided in **SystemVerilog/Verilog, VHDL, and TL-Verilog**, so you
 can solve in whichever language you like.
 
+You can also try the same questions set on our official website with online IDE https://makercode.jixiao-ai.com/
+
 ---
 
 ## How it works
