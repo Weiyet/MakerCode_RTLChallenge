@@ -15,8 +15,6 @@ Design a carry lookahead adder (CLA) that performs fast binary addition by compu
 | `c_in` | Input | 1 | Carry input |
 | `sum_out` | Output | `[WIDTH-1:0]` | Sum result |
 | `c_out` | Output | 1 | Carry output |
-| `pg_out` | Output | 1 | Propagate signal (optional debug) |
-| `gg_out` | Output | 1 | Generate signal (optional debug) |
 
 **Parameters**:
 | Parameter | Default Value | Description |

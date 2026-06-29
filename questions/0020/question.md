@@ -4,7 +4,7 @@
 
 Priority arbiters are essential components in digital systems for managing access to shared resources. They resolve conflicts when multiple requesters simultaneously attempt to access a resource by granting access to only one requester based on a predefined priority scheme. This ensures fair and deterministic resource allocation while preventing conflicts.
 
-Design a parametizable priority arbiter that grants access to the highest priority requester when multiple requests are active simultaneously. The arbiter should implement a fixed priority scheme where lower-indexed ports have higher priority, and output a one-hot grant signal indicating which requester receives access.
+Design a parameterizable priority arbiter that grants access to the highest priority requester when multiple requests are active simultaneously. The arbiter should implement a fixed priority scheme where lower-indexed ports have higher priority, and output a one-hot grant signal indicating which requester receives access.
 
 ### Module Interface
 

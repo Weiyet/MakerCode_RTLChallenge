@@ -4,7 +4,7 @@
 
 First-In-First-Out (FIFO) buffers are essential components in digital systems for managing data flow between producers and consumers operating at different rates. Synchronous FIFOs operate on a single clock domain and provide temporary storage with proper flow control to prevent overflow and underflow conditions.
 
-Design a parametizable synchronous FIFO that supports configurable depth and data width. The FIFO should implement proper push/pop operations with full and empty status flags, and maintain data integrity while providing optimal storage utilization.
+Design a parameterizable synchronous FIFO that supports configurable depth and data width. The FIFO should implement proper push/pop operations with full and empty status flags, and maintain data integrity while providing optimal storage utilization.
 
 ### Module Interface
 

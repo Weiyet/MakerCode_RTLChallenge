@@ -2,8 +2,8 @@
 
 module tb;
 
-localparam INPUT_WIDTH = 8;
-localparam COUNT_WIDTH = 4;
+parameter INPUT_WIDTH = 8;            // overridable via -P (see input_vector.txt)
+parameter COUNT_WIDTH = 4;            // overridable via -P (see input_vector.txt)
 localparam TB_SIM_TIMEOUT = 30000000;
 
 reg  [INPUT_WIDTH-1:0] data_in;

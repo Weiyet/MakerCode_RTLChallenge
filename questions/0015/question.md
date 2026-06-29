@@ -4,7 +4,7 @@
 
 Binary-to-Gray code converters are essential components in digital systems, commonly used in counters, rotary encoders, position sensors, and asynchronous data transfer applications. Gray code (also known as reflected binary code) ensures that only one bit changes at a time when incrementing, reducing errors in digital systems and eliminating race conditions.
 
-Design a parametizable binary-to-Gray code converter that converts standard binary input to Gray code output. The module should be configurable to handle different word widths through a parameter, making it reusable across various applications requiring different data widths.
+Design a parameterizable binary-to-Gray code converter that converts standard binary input to Gray code output. The module should be configurable to handle different word widths through a parameter, making it reusable across various applications requiring different data widths.
 
 ### Module Interface
 

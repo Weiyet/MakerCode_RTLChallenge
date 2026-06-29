@@ -134,7 +134,7 @@ module tb;
         $finish;
     end
 
-    // Waveform dump (enabled by the Makefile via +VCDFILE=<file>)
+    // Waveform dump (enabled via +VCDFILE=<file>)
     string filename;
     initial begin
         if ($value$plusargs("VCDFILE=%s", filename)) begin

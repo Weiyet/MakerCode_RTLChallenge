@@ -5,7 +5,7 @@ module tb;
     //---------------------------------------------------------
     // Parameters
     //---------------------------------------------------------
-    localparam WIDTH = 32;                // Can change up to 32
+    parameter WIDTH = 32;                 // overridable via -P tb.WIDTH (see input_vector.txt)
     localparam NUM_VECTORS = 32;          // Number of test vectors
     localparam TB_SIM_TIMEOUT = 30_000_000; // ns
 

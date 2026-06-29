@@ -4,7 +4,7 @@
 
 Binary-to-one-hot encoders are essential components in digital systems, commonly used for address decoding, chip select generation, state machine one-hot encoding, priority encoding, and memory/register bank selection. These encoders provide efficient decoding functionality where only one output bit is asserted for each unique binary input combination.
 
-Design a parametizable binary-to-one-hot encoder that converts a binary input to a one-hot output. The module should be configurable to handle different input widths and corresponding output widths through parameters, making it reusable across various applications requiring different address spaces and selection schemes.
+Design a parameterizable binary-to-one-hot encoder that converts a binary input to a one-hot output. The module should be configurable to handle different input widths and corresponding output widths through parameters, making it reusable across various applications requiring different address spaces and selection schemes.
 
 ### Module Interface
 
