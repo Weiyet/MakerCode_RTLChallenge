@@ -17,37 +17,6 @@ You can also try the same questions set on our official website with online IDE 
 
 ---
 
-## Learning tracks (zero → hero)
-
-New to RTL, or want a **guided path** instead of diving into the 101-challenge
-bank? Two self-checking **learning tracks** take you from a single wire to a
-working UART transmitter, one concept at a time — **40 problems each**, in the
-same `question.md` + template + testbench format as the main bank:
-
-- **[`track/verilog_zero2hero/`](track/verilog_zero2hero/)** — SystemVerilog / Verilog.
-  Gates → vectors → combinational blocks → SV data types → sequential logic → FSMs →
-  module instantiation & hierarchy → tasks/functions & `fork`.
-- **[`track/vhdl_zero2hero/`](track/vhdl_zero2hero/)** — the VHDL sibling, the same
-  ladder in idiomatic VHDL-2008 (`component` / `generic map`, records, `process`,
-  concurrent processes).
-
-Each problem has a concept-framed title (e.g. *"Combinational logic (2-to-1
-multiplexer)"*), a tutorial-style `question.md`, an `interface.*` you fill in, a
-reference `solution.*`, and a self-checking testbench. Every track folder has its
-own `Makefile` (it **reuses this one via `include`**) and a `rtl_challenge_db.csv`
-index. Run them the same way as the bank:
-
-```bash
-cd track/verilog_zero2hero
-make sim QUESTION=0                    # test your interface.sv
-make sim QUESTION=0 DUT=solution.sv    # or check the reference
-
-cd ../vhdl_zero2hero
-make sim QUESTION=0 DUT=solution.vhdl  # VHDL track runs on GHDL
-```
-
----
-
 ## How it works
 
 1. Pick a challenge (e.g. `0005`) and read its `question.md`.
@@ -149,7 +118,7 @@ them out of version control.
 │       ├── solution.sv        # reference answer, SystemVerilog (try before you peek!)
 │       ├── solution.vhdl      # reference answer, VHDL  (placeholder / WIP)
 │       └── solution.tlv       # reference answer, TL-Verilog  (placeholder / WIP)
-└── track/                 # guided zero → hero learning tracks (see top of README)
+└── track/                 # guided zero → hero learning tracks (see below)
     ├── verilog_zero2hero/     # SystemVerilog/Verilog · 40 problems (0000-0039)
     └── vhdl_zero2hero/        # VHDL-2008 · 40 problems (0000-0039)
 ```
@@ -312,6 +281,37 @@ local progress.
 | 0098 | MAC Unit | Medium |
 | 0099 | Max Pooling Unit | Easy |
 | 0100 | Argmax Unit | Easy |
+
+---
+
+## Learning tracks (zero → hero)
+
+New to RTL, or want a **guided path** instead of diving into the 101-challenge
+bank? Two self-checking **learning tracks** take you from a single wire to a
+working UART transmitter, one concept at a time — **40 problems each**, in the
+same `question.md` + template + testbench format as the main bank:
+
+- **[`track/verilog_zero2hero/`](track/verilog_zero2hero/)** — SystemVerilog / Verilog.
+  Gates → vectors → combinational blocks → SV data types → sequential logic → FSMs →
+  module instantiation & hierarchy → tasks/functions & `fork`.
+- **[`track/vhdl_zero2hero/`](track/vhdl_zero2hero/)** — the VHDL sibling, the same
+  ladder in idiomatic VHDL-2008 (`component` / `generic map`, records, `process`,
+  concurrent processes).
+
+Each problem has a concept-framed title (e.g. *"Combinational logic (2-to-1
+multiplexer)"*), a tutorial-style `question.md`, an `interface.*` you fill in, a
+reference `solution.*`, and a self-checking testbench. Every track folder has its
+own `Makefile` (it **reuses this one via `include`**) and a `rtl_challenge_db.csv`
+index. Run them the same way as the bank:
+
+```bash
+cd track/verilog_zero2hero
+make sim QUESTION=0                    # test your interface.sv
+make sim QUESTION=0 DUT=solution.sv    # or check the reference
+
+cd ../vhdl_zero2hero
+make sim QUESTION=0 DUT=solution.vhdl  # VHDL track runs on GHDL
+```
 
 ---
 
