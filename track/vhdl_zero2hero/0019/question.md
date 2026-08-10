@@ -1,11 +1,14 @@
 # Population count (generic)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** `generic`, `math_real` for sizing, loop accumulate
+**Difficulty:** ⭐⭐⭐ · **Topics:** `generic`, `math_real` sizing, loop accumulate
 
-## Learning objective
-Count set bits with an output width that scales with the input.
+## Background
+"Popcount" = number of set bits. Counting `WIDTH` bits gives 0..WIDTH, needing
+`ceil(log2(WIDTH+1))` output bits. VHDL has no `$clog2`, so size the port with
+`integer(ceil(log2(real(WIDTH+1))))` from `ieee.math_real`. Inside, accumulate
+into an `integer` and convert back.
 
-## Problem
+## The task
 Return the number of 1s in a `WIDTH`-bit input.
 
 ## Interface
@@ -16,7 +19,28 @@ Return the number of 1s in a `WIDTH`-bit input.
 
 **Generic:** `WIDTH` (default 8)
 
+## How to approach it
+```vhdl
+process(all)
+    variable c : integer;
+begin
+    c := 0;
+    for i in d'range loop
+        if d(i) = '1' then c := c + 1; end if;
+    end loop;
+    count <= std_logic_vector(to_unsigned(c, count'length));
+end process;
+```
+
+## Common mistakes
+- Under-sizing `count` (miss the all-ones = WIDTH case).
+- Forgetting `use ieee.math_real.all;` for `ceil`/`log2`.
+
 ## VHDL notes
-VHDL has no `$clog2`; size the port with
-`integer(ceil(log2(real(WIDTH+1))))` from `ieee.math_real`. Inside, accumulate
-into an `integer` and convert with `to_unsigned(c, count'length)`.
+`count'length` gives the port width, so `to_unsigned(c, count'length)` always
+matches — no magic numbers.
+
+## Run it (GHDL)
+```bash
+ghdl -a --std=08 0019/solution.vhdl 0019/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```

@@ -2,11 +2,15 @@
 
 **Difficulty:** ⭐⭐ · **Topics:** `always_ff`, non-blocking `<=`, clock edge
 
-## Learning objective
-Your first sequential element: capture `d` on the rising clock edge.
+## Background
+Everything so far was **combinational** — outputs follow inputs instantly. A
+**flip-flop** adds *memory*: it samples its input on the rising clock edge and
+holds that value until the next edge. This is the atom of all sequential logic.
+Describe it with `always_ff @(posedge clk)` and the **non-blocking** assignment
+`<=`, which models "all flops sample together, then update together".
 
-## Problem
-On every rising edge of `clk`, `q` takes the value of `d`.
+## The task
+On each rising edge of `clk`, `q` takes `d`.
 
 ## Interface
 | Port | Dir | Width | Description |
@@ -22,10 +26,26 @@ On every rising edge of `clk`, `q` takes the value of `d`.
   {"name": "q",   "wave": "0..1..0"}
 ]}
 ```
+Notice `q` follows `d` but shifted to the next clock edge.
 
-## Hints
-- Use `always_ff @(posedge clk)` with a non-blocking assignment `q <= d;`.
+## How to approach it
+```systemverilog
+always_ff @(posedge clk)
+    q <= d;
+```
+
+## Common mistakes
+- Using blocking `=` for state — always use `<=` in `always_ff`. Mixing them
+  causes simulation/synthesis mismatches and race-like bugs.
+- Reading `q` combinationally elsewhere and expecting the *new* value in the same
+  cycle — it updates only at the edge.
 
 ## SystemVerilog notes
-`always_ff` documents intent (a flip-flop) and lets the tool flag accidental
-combinational/latch logic. Always use `<=` (non-blocking) for sequential state.
+`always_ff` tells the tool "this is a register"; it will error if the body cannot
+be synthesized as flops. Combinational logic uses `always_comb` with `=`;
+sequential uses `always_ff` with `<=`.
+
+## Run it
+```bash
+iverilog -g2012 -s tb -o sim 0021/tb.sv 0021/solution.sv && vvp sim
+```

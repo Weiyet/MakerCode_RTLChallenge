@@ -2,15 +2,19 @@
 
 **Difficulty:** ⭐ (Getting started) · **Topics:** entity/architecture, `signal`, concurrent assignment
 
-## Learning objective
-Write your first VHDL `entity` + `architecture` and connect an input to an
-output with a concurrent signal assignment.
+## Background
+VHDL describes hardware, not a sequential program. A design unit has two parts:
+an **entity** (its name and its **ports** — the inputs and outputs) and an
+**architecture** (the body describing behaviour). The simplest circuit is a
+**wire**, a permanent connection, written as a **concurrent signal assignment**
+in the architecture body. "Concurrent" means it is always active: whenever the
+input changes, the output follows.
 
-## Problem
-Build `wire_passthrough`: the output `y` always equals the input `a`.
+> `in` and `out` are VHDL **reserved words** (port directions), so the data ports
+> are named `a` and `y`.
 
-> Note: in VHDL `in` and `out` are reserved keywords (port *directions*), so the
-> data ports are named `a` and `y`.
+## The task
+Build `wire_passthrough` where `y` always equals `a`.
 
 ## Interface
 | Port | Dir | Type | Description |
@@ -23,9 +27,26 @@ graph LR
     a([a]) --- y([y])
 ```
 
-## Hints
-- A concurrent assignment `y <= a;` lives directly in the architecture body.
+## How to approach it
+The entity/architecture skeleton is given; add one concurrent assignment:
+```vhdl
+y <= a;
+```
+
+## Common mistakes
+- Using `:=` (variable assignment) where `<=` (signal assignment) is required for
+  a signal/port.
+- Putting the assignment outside the `architecture ... begin ... end` region.
 
 ## VHDL notes
 `std_logic` (from `ieee.std_logic_1164`) is the 9-value logic type used for
-synthesis. `<=` is *signal* assignment; `:=` is *variable* assignment.
+synthesis. Remember the two assignment operators: `<=` for **signals**, `:=` for
+**variables** (seen later inside processes).
+
+## Run it (GHDL)
+```bash
+# from track/vhdl_zero2hero/
+ghdl -a --std=08 0000/solution.vhdl 0000/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```
+A correct run prints `Test PASS`. Swap `solution.vhdl` for `interface.vhdl` to test
+your own answer.

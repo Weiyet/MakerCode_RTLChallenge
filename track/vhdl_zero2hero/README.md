@@ -30,6 +30,9 @@ A correct run prints `Test PASS`; a mismatch prints a `report ... severity error
 line. (`--std=08` is required — several problems use VHDL-2008 features such as
 unary reduction operators and `process(all)`.)
 
+A machine-readable index of every problem (id, title, module, difficulty, topics)
+is in [`rtl_challenge_db.csv`](rtl_challenge_db.csv).
+
 ## Curriculum
 
 ### Module 1 — Gates & wires

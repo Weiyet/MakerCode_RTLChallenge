@@ -26,6 +26,9 @@ iverilog -g2012 -s tb -o sim NNNN/tb.sv NNNN/solution.sv && vvp sim
 A run ends with `Test PASS` when correct; any mismatch prints an `ERROR: ...tb.sv`
 line (same convention as the main `questions/` bank).
 
+A machine-readable index of every problem (id, title, module, difficulty, topics)
+is in [`rtl_challenge_db.csv`](rtl_challenge_db.csv).
+
 ## Curriculum
 
 ### Module 1 — Gates & wires

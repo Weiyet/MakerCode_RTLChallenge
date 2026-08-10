@@ -2,8 +2,13 @@
 
 **Difficulty:** ⭐⭐ · **Topics:** `process`, `case`, generic width
 
-## Problem
-Route one of `d0..d3` to `y` according to `sel`.
+## Background
+Past two inputs, a **`case`** inside a process is the clear way to write a mux (and
+later any decoder or FSM output). Cover every choice and end with `when others`,
+so no input value is left undefined.
+
+## The task
+Route one of `d0..d3` to `y` based on `sel`, width `W`.
 
 ## Interface
 | Port | Dir | Type | Description |
@@ -14,6 +19,29 @@ Route one of `d0..d3` to `y` according to `sel`.
 
 **Generic:** `W` (default 8)
 
+## How to approach it
+```vhdl
+process(all)
+begin
+    case sel is
+        when "00"   => y <= d0;
+        when "01"   => y <= d1;
+        when "10"   => y <= d2;
+        when others => y <= d3;
+    end case;
+end process;
+```
+
+## Common mistakes
+- Omitting `when others` — a VHDL `case` on `std_logic_vector` must cover all
+  patterns; `when others` handles the metavalue combinations too.
+- Forgetting `process(all)` / a complete sensitivity list.
+
 ## VHDL notes
-`case sel is when "00" => ... when others => ... end case;` inside a
-`process(all)` (VHDL-2008) covers every choice with no latch.
+`process(all)` (VHDL-2008) auto-derives the sensitivity list — ideal for
+combinational logic.
+
+## Run it (GHDL)
+```bash
+ghdl -a --std=08 0013/solution.vhdl 0013/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```

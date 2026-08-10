@@ -1,0 +1,33 @@
+ID,Title,Module,Difficulty,Topics
+0000,Wire,M1 Gates & wires,1,"modules, ports, assign, logic type"
+0001,Constants,M1 Gates & wires,1,"literals, constant drivers"
+0002,Inverter (NOT),M1 Gates & wires,1,bitwise ~
+0003,Basic logic gates,M1 Gates & wires,1,"bitwise operators, multiple outputs"
+0004,2-to-1 Multiplexer,M1 Gates & wires,2,"conditional operator, selection"
+0005,Vector split,M2 Vectors & types,1,"vectors, part-select"
+0006,Reduction operators,M2 Vectors & types,2,reduction & | ^
+0007,Concatenation & replication,M2 Vectors & types,2,"{a,b} concat, {N{x}} replication"
+0008,Vector reverse,M2 Vectors & types,2,"always_comb, for loop"
+0009,Byte reverse (unpacked arrays),M2 Vectors & types,2,packed vs unpacked arrays
+0010,Half adder,M3 Combinational blocks,1,"xor/and, arithmetic from gates"
+0011,Full adder,M3 Combinational blocks,2,carry logic
+0012,Ripple-carry adder (generate),M3 Combinational blocks,3,"parameter, generate/genvar"
+0013,4-to-1 Multiplexer,M3 Combinational blocks,2,"always_comb, case"
+0014,2-to-4 Decoder (with enable),M3 Combinational blocks,2,"decoders, one-hot, enable"
+0015,Priority encoder (casez),M3 Combinational blocks,3,"casez, don't-cares, priority"
+0016,BCD to 7-segment,M3 Combinational blocks,3,"case, look-up mapping"
+0017,ALU with enum opcodes,M4 Language features,3,"enum, case, status flags"
+0018,Packed struct,M4 Language features,3,"struct packed, typedef, bit layout"
+0019,Population count (parameterized),M4 Language features,3,"parameter, $clog2"
+0020,Gray / binary codec (functions),M4 Language features,3,"function automatic, reuse"
+0021,D flip-flop,M5 Sequential,2,"always_ff, non-blocking <=, clock edge"
+0022,Reset styles: synchronous vs asynchronous,M5 Sequential,3,"reset, sensitivity lists"
+0023,Enabled register (load enable),M5 Sequential,2,"clock enable, hold"
+0024,Shift register (SIPO),M5 Sequential,2,"shifting, serial-in parallel-out"
+0025,Up/down counter with load,M5 Sequential,3,"counters, load/enable priority"
+0026,LFSR (pseudo-random),M5 Sequential,3,"feedback shift register, XOR taps"
+0027,Edge detector (one-pulse),M6 FSM & hero,3,"registering history, one-cycle pulse"
+0028,"Sequence detector ""1011"" (Moore FSM)",M6 FSM & hero,4,"enum FSM, Moore output, overlap"
+0029,"Mealy detector ""11""",M6 FSM & hero,3,Mealy vs Moore
+0030,Switch debouncer,M6 FSM & hero,4,"counter + FSM, glitch rejection"
+0031,UART transmitter (hero),M6 FSM & hero,5,"FSM + datapath, serialization, timing"

@@ -2,9 +2,15 @@
 
 **Difficulty:** ⭐⭐⭐ · **Topics:** Mealy vs Moore
 
-## Problem
-Assert `y` in the *same* cycle when the current `din` and the previous `din` are
-both 1 (overlapping). Mealy: output depends on state **and** input.
+## Background
+A **Mealy** machine's output depends on the state **and** the current input, so it
+can react a cycle earlier than a Moore machine — at the cost of being
+combinational (and able to glitch). Compare this "two 1s in a row" detector with
+the Moore FSM in 0028.
+
+## The task
+Assert `y` in the *same* cycle when the current and previous `din` are both 1
+(overlapping).
 
 ## Interface
 | Port | Dir | Type | Description |
@@ -22,6 +28,31 @@ stateDiagram-v2
     S1 --> S0: din=0 / y=0
 ```
 
+## How to approach it
+One state bit ("was the previous bit a 1?"):
+```vhdl
+type state_t is (S0, S1);
+signal state : state_t;
+...
+process(clk, rst_n)
+begin
+    if rst_n = '0' then state <= S0;
+    elsif rising_edge(clk) then
+        if din = '1' then state <= S1; else state <= S0; end if;
+    end if;
+end process;
+y <= '1' when (state = S1 and din = '1') else '0';   -- reacts to din now
+```
+
+## Common mistakes
+- Registering `y` (that makes it Moore, a cycle late).
+- Dropping the `and din` term (the "current input" half of a Mealy output).
+
 ## VHDL notes
-One state bit is enough (was the last bit a 1?). `y <= '1' when state = S1 and
-din = '1' else '0';` reacts to `din` immediately — the Mealy hallmark.
+Mealy outputs are combinational and can glitch — register them if a downstream
+block needs a clean pulse.
+
+## Run it (GHDL)
+```bash
+ghdl -a --std=08 0029/solution.vhdl 0029/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```

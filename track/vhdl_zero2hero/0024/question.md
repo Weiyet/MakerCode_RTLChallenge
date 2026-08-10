@@ -2,9 +2,14 @@
 
 **Difficulty:** ⭐⭐ · **Topics:** shifting, `&`
 
-## Problem
-Each clock shift left and insert `sin` at the LSB: `q <= q(W-2 downto 0) & sin`.
-Async active-low reset clears `q`.
+## Background
+A **shift register** moves its bits along each clock. Serial-in parallel-out
+collects a serial stream into a word — the receiver half of a serial link. Each
+clock: `q <= q(W-2 downto 0) & sin` drops the MSB, shifts up, and inserts `sin` at
+the LSB.
+
+## The task
+Shift left, inserting `sin` at the LSB; async active-low reset clears `q`.
 
 ## Interface
 | Port | Dir | Type | Description |
@@ -14,3 +19,27 @@ Async active-low reset clears `q`.
 | `q`   | out | std_logic_vector(W-1 downto 0) | parallel output |
 
 **Generic:** `W` (default 8)
+
+## How to approach it
+```vhdl
+process(clk, rst_n)
+begin
+    if rst_n = '0' then
+        q_i <= (others => '0');
+    elsif rising_edge(clk) then
+        q_i <= q_i(W-2 downto 0) & sin;
+    end if;
+end process;
+q <= q_i;
+```
+(An internal `q_i` is used because an `out` port cannot be read back.)
+
+## Common mistakes
+- Reading the `out` port `q` directly — keep an internal signal and drive `q` from
+  it.
+- Shifting the wrong direction.
+
+## Run it (GHDL)
+```bash
+ghdl -a --std=08 0024/solution.vhdl 0024/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```

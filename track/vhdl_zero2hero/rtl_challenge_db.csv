@@ -1,0 +1,33 @@
+ID,Title,Module,Difficulty,Topics
+0000,Wire,M1 Gates & wires,1,"entity/architecture, signal, concurrent assignment"
+0001,Constants,M1 Gates & wires,1,"literals, constant drivers"
+0002,Inverter (NOT),M1 Gates & wires,1,logical not
+0003,Basic logic gates,M1 Gates & wires,1,"logical operators, multiple outputs"
+0004,2-to-1 Multiplexer,M1 Gates & wires,2,conditional signal assignment
+0005,Vector split,M2 Vectors & types,1,"std_logic_vector, slicing with downto"
+0006,Reduction operators,M2 Vectors & types,2,VHDL-2008 unary reduction
+0007,Concatenation & replication,M2 Vectors & types,2,& concatenation
+0008,Vector reverse,M2 Vectors & types,2,"process, for loop"
+0009,Byte reverse (array type),M2 Vectors & types,2,"array type, byte addressing"
+0010,Half adder,M3 Combinational blocks,1,"xor/and, arithmetic from gates"
+0011,Full adder,M3 Combinational blocks,2,carry logic
+0012,Ripple-carry adder (for-generate),M3 Combinational blocks,3,"generic, for...generate"
+0013,4-to-1 Multiplexer,M3 Combinational blocks,2,"process, case, generic width"
+0014,2-to-4 Decoder (with enable),M3 Combinational blocks,2,"one-hot, to_integer"
+0015,Priority encoder,M3 Combinational blocks,3,priority via if/elsif
+0016,BCD to 7-segment,M3 Combinational blocks,3,"case, look-up"
+0017,ALU with an enumerated opcode,M4 Language features,3,"enumerated type, 'val, numeric_std"
+0018,Records (grouping fields),M4 Language features,3,"record type, concatenation"
+0019,Population count (generic),M4 Language features,3,"generic, math_real sizing"
+0020,Gray / binary codec (functions),M4 Language features,3,"function, reuse"
+0021,D flip-flop,M5 Sequential,2,"clocked process, rising_edge"
+0022,Reset styles: synchronous vs asynchronous,M5 Sequential,3,"reset, sensitivity lists"
+0023,Enabled register (load enable),M5 Sequential,2,"clock enable, hold"
+0024,Shift register (SIPO),M5 Sequential,2,"shifting, &"
+0025,Up/down counter with load,M5 Sequential,3,"counters, priority, unsigned"
+0026,LFSR (pseudo-random),M5 Sequential,3,"feedback shift register, XOR taps"
+0027,Edge detector (one-pulse),M6 FSM & hero,3,"registering history, one-cycle pulse"
+0028,"Sequence detector ""1011"" (Moore FSM)",M6 FSM & hero,4,"enumerated state type, Moore output"
+0029,"Mealy detector ""11""",M6 FSM & hero,3,Mealy vs Moore
+0030,Switch debouncer,M6 FSM & hero,4,"counter + condition, glitch rejection"
+0031,UART transmitter (hero),M6 FSM & hero,5,"FSM + datapath, serialization, timing"

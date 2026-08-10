@@ -2,11 +2,16 @@
 
 **Difficulty:** ⭐⭐⭐ · **Topics:** enumerated `type`, `'val`, `case`, `numeric_std`
 
-## Learning objective
-Decode a numeric opcode into a named enumerated type and switch on it.
+## Background
+An **ALU** does one of several operations chosen by an opcode. Rather than switch
+on raw numbers, define an **enumerated type** (`type op_t is (OP_ADD, ...)`) for
+readable names. The opcode arrives as a `std_logic_vector`, so convert it with
+`op_t'val(to_integer(unsigned(op)))` — the `'val` attribute maps an integer
+position to the matching enum value. Arithmetic uses `unsigned` from
+`ieee.numeric_std`.
 
-## Problem
-8-bit ALU. `op` selects the operation; `zero='1'` when the result is all-zero.
+## The task
+8-bit ALU with a `zero` flag.
 
 | op | name | y |
 |----|------|---|
@@ -29,7 +34,29 @@ Decode a numeric opcode into a named enumerated type and switch on it.
 
 **Generic:** `W` (default 8)
 
+## How to approach it
+```vhdl
+type op_t is (OP_ADD, OP_SUB, OP_AND, OP_OR, OP_XOR, OP_SLL, OP_SRL, OP_SLT);
+...
+case op_t'val(to_integer(unsigned(op))) is
+    when OP_ADD => ys := std_logic_vector(unsigned(a) + unsigned(b));
+    when OP_SLL => ys := std_logic_vector(shift_left(unsigned(a), sh));
+    -- ...
+end case;
+```
+Use `shift_left`/`shift_right` (numeric_std) for the shifts and derive `zero`
+from the result.
+
+## Common mistakes
+- Forgetting `use ieee.numeric_std.all;`.
+- Trying to do arithmetic directly on `std_logic_vector` — cast to `unsigned`
+  first.
+
 ## VHDL notes
-`type op_t is (OP_ADD, OP_SUB, ...);` defines an enumerated type. `op_t'val(n)`
-converts an integer position to the enum value, so you can `case` on readable
-names. Arithmetic uses `unsigned` from `ieee.numeric_std`.
+`op_t'val(n)` is the inverse of `op_t'pos(v)`. Enumerated states/opcodes show up
+by name in the waveform.
+
+## Run it (GHDL)
+```bash
+ghdl -a --std=08 0017/solution.vhdl 0017/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```

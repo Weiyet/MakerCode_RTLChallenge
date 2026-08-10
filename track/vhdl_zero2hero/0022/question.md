@@ -2,13 +2,18 @@
 
 **Difficulty:** ⭐⭐⭐ · **Topics:** reset, sensitivity lists
 
-## Learning objective
-Compare the two reset styles and their process sensitivity lists.
+## Background
+Registers need a defined start value from **reset**. Two styles differ in *when*
+reset acts:
+- **Synchronous**: reset only checked at a clock edge; process is sensitive to
+  `clk` only.
+- **Asynchronous**: reset acts immediately; process is sensitive to `clk` **and**
+  `rst_n`, and the reset is tested *before* `rising_edge`.
 
-## Problem
-`rst_n` is active-low. Produce two registered copies of `d`:
-- `q_sync`  : reset only takes effect **at a clock edge**.
-- `q_async` : reset clears **immediately** when `rst_n` falls.
+`rst_n` is active-low (`_n`): reset when 0.
+
+## The task
+Produce `q_sync` (sync reset) and `q_async` (async reset) copies of `d`.
 
 ## Interface
 | Port | Dir | Type | Description |
@@ -18,8 +23,32 @@ Compare the two reset styles and their process sensitivity lists.
 | `q_sync`  | out | std_logic | sync-reset register |
 | `q_async` | out | std_logic | async-reset register |
 
+## How to approach it
+```vhdl
+process(clk)                       -- synchronous
+begin
+    if rising_edge(clk) then
+        if rst_n = '0' then q_sync <= '0'; else q_sync <= d; end if;
+    end if;
+end process;
+
+process(clk, rst_n)                -- asynchronous
+begin
+    if rst_n = '0' then q_async <= '0';
+    elsif rising_edge(clk) then q_async <= d;
+    end if;
+end process;
+```
+
+## Common mistakes
+- Wrong sensitivity list for the chosen style.
+- Testing `rising_edge` *before* the async reset — the reset check must come first.
+
 ## VHDL notes
-Async reset lists the reset in the sensitivity list and tests it *before*
-`rising_edge`:
-`process(clk, rst_n) ... if rst_n='0' then ... elsif rising_edge(clk) then ...`.
-Sync reset only lists `clk`.
+Choose one reset style per project. The two pure forms here isolate the essential
+difference.
+
+## Run it (GHDL)
+```bash
+ghdl -a --std=08 0022/solution.vhdl 0022/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```

@@ -2,16 +2,18 @@
 
 **Difficulty:** ⭐⭐⭐ · **Topics:** `function automatic`, reuse
 
-## Learning objective
-Factor repeated combinational math into `function`s and call them from `assign`.
+## Background
+When repeated combinational math shows up, wrap it in a **`function`**. Functions
+have no time (`#`) and return a value, so they synthesize to pure logic and keep
+your code DRY. Here we convert between binary and **Gray code**, where consecutive
+values differ in exactly one bit — useful for pointers crossing clock domains
+(you will see this in real async FIFOs).
 
-## Problem
-Provide two conversions:
-- `gray`    = binary-to-Gray of `bin`   (`g = b ^ (b >> 1)`)
-- `bin_out` = Gray-to-binary of `gray_in`
+- binary → Gray: `g = b ^ (b >> 1)`
+- Gray → binary: MSB copies through, then `b[i] = b[i+1] ^ g[i]`
 
-Gray code changes only one bit between consecutive values — useful for counters
-that cross clock domains.
+## The task
+Provide both conversions.
 
 ## Interface
 | Port | Dir | Width | Description |
@@ -23,10 +25,30 @@ that cross clock domains.
 
 **Parameter:** `W` (default 4)
 
-## Hints
-- `bin2gray`: `return b ^ (b >> 1);`
-- `gray2bin`: MSB copies through, then `b[i] = b[i+1] ^ g[i]`.
+## How to approach it
+```systemverilog
+function automatic logic [W-1:0] bin2gray(input logic [W-1:0] b);
+    return b ^ (b >> 1);
+endfunction
+function automatic logic [W-1:0] gray2bin(input logic [W-1:0] g);
+    logic [W-1:0] b;
+    b[W-1] = g[W-1];
+    for (int i = W-2; i >= 0; i--) b[i] = b[i+1] ^ g[i];
+    return b;
+endfunction
+assign gray = bin2gray(bin);
+assign bin_out = gray2bin(gray_in);
+```
+
+## Common mistakes
+- gray2bin is a *running* XOR from the MSB down — a single `g ^ (g>>1)` does not
+  invert Gray coding.
 
 ## SystemVerilog notes
-`function automatic` gives each call its own storage (safe for reuse/recursion)
-and may contain loops and local variables — a clean way to share logic.
+`function automatic` gives each call its own storage (safe for reuse/recursion).
+Functions may contain loops and locals but no timing controls.
+
+## Run it
+```bash
+iverilog -g2012 -s tb -o sim 0020/tb.sv 0020/solution.sv && vvp sim
+```

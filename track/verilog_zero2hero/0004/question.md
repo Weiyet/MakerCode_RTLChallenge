@@ -2,12 +2,20 @@
 
 **Difficulty:** ⭐⭐ · **Topics:** conditional operator, selection
 
-## Learning objective
-Select one of two inputs with a control bit — the fundamental building block of
-almost every datapath.
+## Background
+A **multiplexer** ("mux") is a controlled switch: a select signal chooses which
+of several inputs reaches the output. It is the single most common building
+block in a datapath — every "choose A or B" decision is a mux.
 
-## Problem
-Build `mux2to1`: when `sel = 0` the output is `a`; when `sel = 1` it is `b`.
+The 2-to-1 mux has two data inputs and one select bit:
+- `sel = 0` → output = `a`
+- `sel = 1` → output = `b`
+
+The cleanest way to write it is the **conditional (ternary) operator**
+`cond ? value_if_true : value_if_false`.
+
+## The task
+Build `mux2to1`.
 
 ## Interface
 | Port | Dir | Width | Description |
@@ -31,5 +39,24 @@ graph LR
 | 0   | a |
 | 1   | b |
 
-## Hints
-- The ternary operator reads naturally: `y = sel ? b : a;`
+## How to approach it
+```systemverilog
+assign y = sel ? b : a;
+```
+Read it as: "if `sel` then `b`, else `a`". Note the order — the *true* branch (`sel=1`)
+gives `b`.
+
+## Common mistakes
+- Swapping the branches (`sel ? a : b`) and selecting the wrong input.
+- Overthinking it with an `always`/`case` block — perfectly valid, but the
+  ternary is the idiomatic one-liner for a 2:1 mux.
+
+## SystemVerilog notes
+The ternary works on vectors too, so the same pattern widens to a bus mux:
+`assign y = sel ? b_bus : a_bus;`. Chaining ternaries builds larger muxes, though
+a `case` inside `always_comb` is clearer past 2 inputs (see problem 0013).
+
+## Run it
+```bash
+iverilog -g2012 -s tb -o sim 0004/tb.sv 0004/solution.sv && vvp sim
+```

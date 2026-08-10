@@ -2,20 +2,21 @@
 
 **Difficulty:** ⭐⭐ · **Topics:** shifting, serial-in parallel-out
 
-## Learning objective
-Shift serial data through a register, oldest bit falling off the top.
+## Background
+A **shift register** moves its bits along by one each clock. A serial-in
+parallel-out (SIPO) shifter collects a serial bit stream into a parallel word — the
+receiver half of any serial link. Each clock: drop the top bit, shift everyone up,
+and drop the new `sin` into the LSB, i.e. `q <= {q[W-2:0], sin}`.
 
-## Problem
-Each clock, shift left by one and insert `sin` at the LSB:
-`q <= {q[W-2:0], sin}`. Async active-low reset clears `q`.
+## The task
+Shift left, inserting `sin` at the LSB; async active-low reset clears `q`.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `clk`   | input  | 1 | clock |
-| `rst_n` | input  | 1 | async active-low reset |
-| `sin`   | input  | 1 | serial input |
-| `q`     | output | W | parallel output |
+| `clk`, `rst_n` | input | 1 | clock / async reset |
+| `sin` | input  | 1 | serial input |
+| `q`   | output | W | parallel output |
 
 **Parameter:** `W` (default 8)
 
@@ -27,5 +28,22 @@ Each clock, shift left by one and insert `sin` at the LSB:
 ]}
 ```
 
-## Hints
-- `{q[W-2:0], sin}` drops the MSB and appends `sin`.
+## How to approach it
+```systemverilog
+always_ff @(posedge clk or negedge rst_n)
+    if (!rst_n) q <= '0;
+    else        q <= {q[W-2:0], sin};
+```
+
+## Common mistakes
+- Shifting the wrong direction — `{q[W-2:0], sin}` shifts toward the MSB and
+  inserts at the LSB. `{sin, q[W-1:1]}` would be the opposite.
+
+## SystemVerilog notes
+Adding a parallel-load input turns this into a PISO/universal shift register — a
+small extension of the same pattern.
+
+## Run it
+```bash
+iverilog -g2012 -s tb -o sim 0024/tb.sv 0024/solution.sv && vvp sim
+```

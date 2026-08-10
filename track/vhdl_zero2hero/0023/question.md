@@ -2,9 +2,12 @@
 
 **Difficulty:** ⭐⭐ · **Topics:** clock enable, hold
 
-## Problem
-`W`-bit register with async active-low reset. When `en='1'` load `d`; otherwise
-hold.
+## Background
+A register that updates only on some cycles uses a **clock enable**: load `d` when
+`en='1'`, otherwise hold. The "hold" is free — simply have no `else` on the enable.
+
+## The task
+`W`-bit register with async active-low reset and a load enable.
 
 ## Interface
 | Port | Dir | Type | Description |
@@ -16,6 +19,24 @@ hold.
 
 **Generic:** `W` (default 8)
 
-## VHDL notes
-Leaving out the `else` on `if en='1' then q<=d; end if;` makes the register
-*hold* its value.
+## How to approach it
+```vhdl
+process(clk, rst_n)
+begin
+    if rst_n = '0' then
+        q <= (others => '0');
+    elsif rising_edge(clk) then
+        if en = '1' then q <= d; end if;   -- no else -> holds
+    end if;
+end process;
+```
+
+## Common mistakes
+- Adding `else q <= q;` (redundant — omitting it already means hold).
+- Resetting with `q <= '0'` (a scalar) instead of the aggregate
+  `(others => '0')` for a vector.
+
+## Run it (GHDL)
+```bash
+ghdl -a --std=08 0023/solution.vhdl 0023/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```

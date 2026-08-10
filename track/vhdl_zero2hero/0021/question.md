@@ -2,11 +2,14 @@
 
 **Difficulty:** ⭐⭐ · **Topics:** clocked `process`, `rising_edge`
 
-## Learning objective
-Your first sequential element: capture `d` on the rising clock edge.
+## Background
+Combinational logic follows its inputs instantly; a **flip-flop** adds memory — it
+samples `d` on the rising clock edge and holds it. This is the atom of sequential
+logic. In VHDL you write it as a `process(clk)` guarded by `rising_edge(clk)`,
+using signal assignment `<=`.
 
-## Problem
-On every rising edge of `clk`, `q` takes `d`.
+## The task
+On each rising edge of `clk`, `q` takes `d`.
 
 ## Interface
 | Port | Dir | Type | Description |
@@ -23,6 +26,25 @@ On every rising edge of `clk`, `q` takes `d`.
 ]}
 ```
 
+## How to approach it
+```vhdl
+process(clk)
+begin
+    if rising_edge(clk) then
+        q <= d;
+    end if;
+end process;
+```
+
+## Common mistakes
+- Assigning outside the `if rising_edge(clk)` guard (creates a latch or a wire).
+- Using `:=` on a signal — flops use `<=`.
+
 ## VHDL notes
-`process(clk) ... if rising_edge(clk) then q <= d; end if;` is the canonical flop.
-`rising_edge` comes from `ieee.std_logic_1164`.
+`rising_edge`/`falling_edge` (from `std_logic_1164`) are the idiomatic edge tests,
+safer than `clk'event and clk='1'`.
+
+## Run it (GHDL)
+```bash
+ghdl -a --std=08 0021/solution.vhdl 0021/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```

@@ -2,13 +2,14 @@
 
 **Difficulty:** ⭐⭐⭐ · **Topics:** `struct packed`, `typedef`, bit layout
 
-## Learning objective
-Group related fields into a named `struct packed` and let the tool lay them out
-in a bit-vector for you.
+## Background
+A **`struct packed`** groups named fields but is still, underneath, one
+bit-vector — so you can assign it to a plain `logic` bus and the fields land in
+declaration order, MSB first. This is perfect for instruction words, packet
+headers, or any format where named fields beat magic bit-ranges.
 
-## Problem
-Pack a control word from four fields. A packed struct lays fields out MSB-first
-in declaration order, so the resulting 16-bit `word` is:
+## The task
+Pack a 16-bit control word from four fields:
 
 | bits    | field  |
 |---------|--------|
@@ -26,10 +27,31 @@ in declaration order, so the resulting 16-bit `word` is:
 | `imm`    | input  | 6 | immediate |
 | `word`   | output | 16 | packed control word |
 
-## Hints
-- Declare `typedef struct packed { logic [3:0] opcode; ... } ctrl_t;`
-- Assigning `word = c;` where `c` is a `ctrl_t` flattens it to bits.
+## How to approach it
+```systemverilog
+typedef struct packed {
+    logic [3:0] opcode;
+    logic [2:0] src;
+    logic [2:0] dst;
+    logic [5:0] imm;
+} ctrl_t;
+ctrl_t c;
+always_comb begin
+    c.opcode = opcode; c.src = src; c.dst = dst; c.imm = imm;
+    word = c;            // flatten to 16 bits
+end
+```
+
+## Common mistakes
+- Field order: the *first* field declared occupies the *most-significant* bits.
+- Widths must sum to the bus width (4+3+3+6 = 16).
 
 ## SystemVerilog notes
-A `struct packed` *is* a vector — you can index/slice it and assign it to a plain
-`logic` bus. Field order top-to-bottom maps MSB-to-LSB.
+Because a packed struct *is* a vector, you can also slice or index it, and pass it
+through ports. `struct packed` is the readable alternative to hand-managing bit
+ranges.
+
+## Run it
+```bash
+iverilog -g2012 -s tb -o sim 0018/tb.sv 0018/solution.sv && vvp sim
+```

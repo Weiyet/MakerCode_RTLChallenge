@@ -2,19 +2,14 @@
 
 **Difficulty:** ⭐⭐⭐ · **Topics:** `record` type, concatenation
 
-## Learning objective
-Group related fields into a `record` (VHDL's struct), then flatten them onto a
-bus with `&`.
+## Background
+A VHDL **record** groups named fields — the counterpart of a struct. Unlike a
+SystemVerilog `struct packed`, a record is **not** automatically a bit-vector, so
+to produce a packed bus you flatten it explicitly with `&`. Records are still very
+useful for passing bundles of related signals around a design.
 
-## Problem
-Pack a 16-bit control word from four fields, MSB-first:
-
-| bits    | field  |
-|---------|--------|
-| [15:12] | opcode |
-| [11:9]  | src    |
-| [8:6]   | dst    |
-| [5:0]   | imm    |
+## The task
+Pack a 16-bit control word (MSB-first): `opcode`(4) · `src`(3) · `dst`(3) · `imm`(6).
 
 ## Interface
 | Port | Dir | Type | Description |
@@ -25,7 +20,29 @@ Pack a 16-bit control word from four fields, MSB-first:
 | `imm`    | in  | std_logic_vector(5 downto 0) | immediate |
 | `word`   | out | std_logic_vector(15 downto 0) | packed word |
 
+## How to approach it
+```vhdl
+type ctrl_t is record
+    opcode : std_logic_vector(3 downto 0);
+    src    : std_logic_vector(2 downto 0);
+    dst    : std_logic_vector(2 downto 0);
+    imm    : std_logic_vector(5 downto 0);
+end record;
+...
+c.opcode := opcode; c.src := src; c.dst := dst; c.imm := imm;
+word <= c.opcode & c.src & c.dst & c.imm;
+```
+
+## Common mistakes
+- Expecting `word <= c;` to work — a record is not a vector; concatenate its
+  fields.
+- Field/bit-order: concatenate MSB field first.
+
 ## VHDL notes
-Unlike a SystemVerilog `struct packed`, a VHDL `record` is **not** automatically
-a bit-vector — you flatten it explicitly with `&`. Records are still great for
-passing grouped signals around a design.
+For bit-exact packing you can also use a record with a to/from-`std_logic_vector`
+conversion function, but explicit `&` is the clearest for a fixed layout.
+
+## Run it (GHDL)
+```bash
+ghdl -a --std=08 0018/solution.vhdl 0018/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
+```
