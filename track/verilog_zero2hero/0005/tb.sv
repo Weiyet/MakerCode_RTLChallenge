@@ -1,18 +1,21 @@
 `timescale 1ns/1ps
 module tb;
     localparam TB_SIM_TIMEOUT = 100000;
-    logic [15:0] in;
-    logic [7:0]  hi, lo;
+    logic [7:0]  a, b;
+    logic [15:0] cat;
+    logic [31:0] rep4;
+    logic [7:0]  nib_swap;
     int ERR_COUNT = 0;
 
-    vector_split DUT (.in(in), .hi(hi), .lo(lo));
+    concat_replicate DUT (.a(a), .b(b), .cat(cat), .rep4(rep4), .nib_swap(nib_swap));
 
     initial begin
         for (int i = 0; i < 20; i++) begin
-            in = $random;
+            a = $random; b = $random;
             #5;
-            if (hi !== in[15:8]) begin ERR_COUNT++; $error("%0tns hi=%h expected=%h", $time, hi, in[15:8]); end
-            if (lo !== in[7:0])  begin ERR_COUNT++; $error("%0tns lo=%h expected=%h", $time, lo, in[7:0]);  end
+            if (cat      !== {a, b})             begin ERR_COUNT++; $error("%0tns cat=%h",  $time, cat);  end
+            if (rep4     !== {4{a}})             begin ERR_COUNT++; $error("%0tns rep4=%h", $time, rep4); end
+            if (nib_swap !== {a[3:0], a[7:4]})   begin ERR_COUNT++; $error("%0tns nib_swap=%h", $time, nib_swap); end
             #5;
         end
         check_result;

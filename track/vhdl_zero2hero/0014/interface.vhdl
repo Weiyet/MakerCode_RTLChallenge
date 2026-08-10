@@ -2,15 +2,20 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity decoder2to4 is
-  port (
-    code : in  std_logic_vector(1 downto 0);
-    en   : in  std_logic;
-    y    : out std_logic_vector(3 downto 0)
+entity alu is
+  generic (
+    W : integer := 8
   );
-end entity decoder2to4;
+  port (
+    a    : in  std_logic_vector(W-1 downto 0);
+    b    : in  std_logic_vector(W-1 downto 0);
+    op   : in  std_logic_vector(2 downto 0);
+    y    : out std_logic_vector(W-1 downto 0);
+    zero : out std_logic
+  );
+end entity alu;
 
-architecture rtl of decoder2to4 is
+architecture rtl of alu is
 begin
   -- your implementation here
 

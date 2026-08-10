@@ -1,23 +1,13 @@
-module gray_codec #(
-    parameter int W = 4
+module enable_register #(
+    parameter int W = 8
 ) (
-    input  logic [W-1:0] bin,
-    input  logic [W-1:0] gray_in,
-    output logic [W-1:0] gray,
-    output logic [W-1:0] bin_out
+    input  logic         clk,
+    input  logic         rst_n,
+    input  logic         en,
+    input  logic [W-1:0] d,
+    output logic [W-1:0] q
 );
-    function automatic logic [W-1:0] bin2gray(input logic [W-1:0] b);
-        return b ^ (b >> 1);
-    endfunction
-
-    function automatic logic [W-1:0] gray2bin(input logic [W-1:0] g);
-        logic [W-1:0] b;
-        b[W-1] = g[W-1];
-        for (int i = W-2; i >= 0; i--)
-            b[i] = b[i+1] ^ g[i];
-        return b;
-    endfunction
-
-    assign gray    = bin2gray(bin);
-    assign bin_out = gray2bin(gray_in);
+    always_ff @(posedge clk or negedge rst_n)
+        if (!rst_n)   q <= '0;
+        else if (en)  q <= d;
 endmodule

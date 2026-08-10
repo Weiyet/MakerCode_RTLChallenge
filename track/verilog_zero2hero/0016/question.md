@@ -1,64 +1,40 @@
-# BCD to 7-segment
+# Parameters (parameterized population count)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** `case`, look-up mapping
+**Difficulty:** ⭐⭐⭐ · **Topics:** `parameter`, `$clog2`, accumulate in `always_comb`
 
 ## Background
-A seven-segment display lights combinations of segments `a`..`g` to show a digit.
-Converting a 4-bit decimal digit to the right segment pattern is a pure
-**look-up table**, naturally written as a `case`. This example drives an
-**active-high, common-cathode** display where a `1` lights a segment, and packs
-the segments as `seg[6:0] = {g,f,e,d,c,b,a}` (so bit 0 is segment `a`).
-
-```
- aaa
-f   b
-f   b
- ggg
-e   c
-e   c
- ddd
-```
+"Popcount" = how many bits are set. The interesting part is **sizing the output**:
+counting `WIDTH` bits gives a value 0..WIDTH, which needs `$clog2(WIDTH+1)` bits.
+`$clog2(n)` is the number of bits to represent values `0..n-1`, so using it keeps
+the port correct as `WIDTH` changes.
 
 ## The task
-For digits 0-9 output the standard pattern; for A-F (10-15) output all-off.
+Return the number of 1s in a `WIDTH`-bit input.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `bcd` | input  | 4 | digit 0-15 |
-| `seg` | output | 7 | `{g,f,e,d,c,b,a}` active-high |
+| `in`    | input  | WIDTH | data |
+| `count` | output | $clog2(WIDTH+1) | number of set bits |
 
-## Segment table (hex value of {g,f,e,d,c,b,a})
-| digit | seg | | digit | seg |
-|-------|-----|-|-------|-----|
-| 0 | 3F | | 5 | 6D |
-| 1 | 06 | | 6 | 7D |
-| 2 | 5B | | 7 | 07 |
-| 3 | 4F | | 8 | 7F |
-| 4 | 66 | | 9 | 6F |
+**Parameter:** `WIDTH` (default 8)
 
 ## How to approach it
 ```systemverilog
 always_comb begin
-    case (bcd)
-        4'd0: seg = 7'h3F;
-        // ... 1 through 9 ...
-        default: seg = 7'h00;   // blanks 10-15
-    endcase
+    count = '0;
+    for (int i = 0; i < WIDTH; i++)
+        count += in[i];       // add each bit (0 or 1)
 end
 ```
 
+## Worked example
+`WIDTH=8`, `in=8'b1011_0010` → count = 4.
+
 ## Common mistakes
-- Getting the segment order wrong — confirm whether the display is `{a..g}` or
-  `{g..a}` and whether it is active-high or -low. Here it is `{g,f,e,d,c,b,a}`,
-  active-high.
-- Missing the `default` for the non-decimal codes.
+- Under-sizing `count` (e.g. `$clog2(WIDTH)` misses the all-ones case = WIDTH).
+- Forgetting to clear `count` before accumulating.
 
 ## SystemVerilog notes
-A `case` like this synthesizes to a small ROM/logic look-up. Deriving each
-segment as a boolean of `bcd` is possible but far less readable than the table.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0016/tb.sv 0016/solution.sv && vvp sim
-```
+Adding a 1-bit value to `count` promotes it correctly. `$countones(in)` is a
+built-in that does the same in a testbench, but here we build it explicitly.

@@ -1,10 +1,11 @@
-module gray_codec #(
-    parameter int W = 4
+module enable_register #(
+    parameter int W = 8
 ) (
-    input  logic [W-1:0] bin,
-    input  logic [W-1:0] gray_in,
-    output logic [W-1:0] gray,
-    output logic [W-1:0] bin_out
+    input  logic         clk,
+    input  logic         rst_n,
+    input  logic         en,
+    input  logic [W-1:0] d,
+    output logic [W-1:0] q
 );
     // your implementation here
 

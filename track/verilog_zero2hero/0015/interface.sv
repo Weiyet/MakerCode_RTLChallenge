@@ -1,7 +1,9 @@
-module priority_encoder (
-    input  logic [3:0] in,
-    output logic [1:0] pos,
-    output logic       valid
+module ctrl_pack (
+    input  logic [3:0]  opcode,
+    input  logic [2:0]  src,
+    input  logic [2:0]  dst,
+    input  logic [5:0]  imm,
+    output logic [15:0] word
 );
     // your implementation here
 

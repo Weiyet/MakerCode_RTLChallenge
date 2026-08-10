@@ -1,14 +1,19 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
+use ieee.math_real.all;
 
-entity bcd_to_7seg is
-  port (
-    bcd : in  std_logic_vector(3 downto 0);
-    seg : out std_logic_vector(6 downto 0)
+entity popcount is
+  generic (
+    WIDTH : integer := 8
   );
-end entity bcd_to_7seg;
+  port (
+    d     : in  std_logic_vector(WIDTH-1 downto 0);
+    count : out std_logic_vector(integer(ceil(log2(real(WIDTH+1))))-1 downto 0)
+  );
+end entity popcount;
 
-architecture rtl of bcd_to_7seg is
+architecture rtl of popcount is
 begin
   -- your implementation here
 

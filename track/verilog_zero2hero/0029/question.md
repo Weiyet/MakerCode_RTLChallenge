@@ -1,54 +1,42 @@
-# Mealy detector "11"
+# Finite state machine (switch debouncer)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** Mealy vs Moore
+**Difficulty:** ⭐⭐⭐⭐ · **Topics:** counter + FSM, glitch rejection
 
 ## Background
-A **Mealy** machine's output depends on the current state **and** the current
-input, so it can respond a cycle earlier than an equivalent Moore machine — at the
-cost of being combinational (and thus able to glitch). Comparing this "two 1s in a
-row" detector with the Moore machine in problem 0028 is the clearest way to feel
-the difference.
+A mechanical switch "bounces" — it makes and breaks contact many times over a few
+milliseconds before settling. Feeding that straight into logic causes dozens of
+false events. A **debouncer** only accepts a new level after the input has stayed
+at that new level for `STABLE` consecutive clocks; any change restarts the count.
+It is a counter guarding a single state bit.
 
 ## The task
-Assert `y` in the *same* cycle when the current and previous `din` are both 1
-(overlapping).
+Track `noisy`; update `clean` only after `STABLE` stable clocks. Async active-low
+reset clears `clean`.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `clk`, `rst_n` | input | 1 | clock / async reset |
-| `din` | input  | 1 | serial data |
-| `y`   | output | 1 | Mealy output (combinational) |
+| `clk`, `rst_n` | input | 1 | clock / reset |
+| `noisy` | input  | 1 | raw (bouncy) input |
+| `clean` | output | 1 | debounced output |
 
-```mermaid
-stateDiagram-v2
-    [*] --> S0
-    S0 --> S1: din=1 / y=0
-    S0 --> S0: din=0 / y=0
-    S1 --> S1: din=1 / y=1
-    S1 --> S0: din=0 / y=0
-```
+**Parameter:** `STABLE` (default 4)
 
 ## How to approach it
-One state bit is enough — "was the previous bit a 1?".
 ```systemverilog
-typedef enum logic {S0, S1} state_e;
-state_e state;
 always_ff @(posedge clk or negedge rst_n)
-    if (!rst_n) state <= S0;
-    else        state <= din ? S1 : S0;
-assign y = (state == S1) & din;   // reacts to din immediately (Mealy)
+    if (!rst_n) begin clean <= 0; cnt <= '0; end
+    else if (noisy != clean) begin
+        if (cnt == STABLE-1) begin clean <= noisy; cnt <= '0; end
+        else cnt <= cnt + 1'b1;
+    end else cnt <= '0;      // input matches output -> reset the timer
 ```
 
 ## Common mistakes
-- Registering `y` — that would make it Moore (one cycle late).
-- Forgetting the `& din`, which is the "current input" half of a Mealy output.
+- Not clearing the counter when the input matches the output — bounces would still
+  accumulate over time.
+- Off-by-one on the threshold (`STABLE` vs `STABLE-1`).
 
 ## SystemVerilog notes
-Because Mealy outputs are combinational, be careful when they feed other logic —
-they can glitch mid-cycle. Register them if a downstream block needs a clean pulse.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0029/tb.sv 0029/solution.sv && vvp sim
-```
+Real debouncers use a `STABLE` sized for milliseconds at the real clock rate
+(e.g. tens of thousands of cycles); a small value keeps this exercise fast.

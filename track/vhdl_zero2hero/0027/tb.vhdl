@@ -6,29 +6,28 @@ use std.env.all;
 entity tb is end entity tb;
 architecture sim of tb is
   signal clk : std_logic := '0';
-  signal rst_n, sig, rise, fall : std_logic := '0';
+  signal rst_n, din, detected : std_logic := '0';
 begin
   clk <= not clk after 5 ns;
-  dut : entity work.edge_detector port map (clk => clk, rst_n => rst_n, sig => sig, rise => rise, fall => fall);
+  dut : entity work.seq_detector_1011 port map (clk => clk, rst_n => rst_n, din => din, detected => detected);
 
   process
     variable errc : integer := 0;
-    variable s1 : positive := 3; variable s2 : positive := 19; variable r : real;
-    variable prev, sv, er, ef : std_logic;
+    variable s1 : positive := 7; variable s2 : positive := 23; variable r : real;
+    variable m  : std_logic_vector(3 downto 0) := "0000";
+    variable dv, de : std_logic;
   begin
-    rst_n <= '0'; sig <= '0';
+    rst_n <= '0'; din <= '0';
     wait until falling_edge(clk); wait until falling_edge(clk);
-    rst_n <= '1'; prev := '0';
-    for i in 0 to 60 loop
+    rst_n <= '1'; m := "0000";
+    for i in 0 to 200 loop
       wait until falling_edge(clk);
-      uniform(s1, s2, r); if r >= 0.5 then sv := '1'; else sv := '0'; end if;
-      sig <= sv;
-      er := sv and (not prev);
-      ef := (not sv) and prev;
-      prev := sv;
+      uniform(s1, s2, r); if r >= 0.45 then dv := '1'; else dv := '0'; end if;
+      din <= dv;
+      m := m(2 downto 0) & dv;
       wait until rising_edge(clk); wait for 1 ns;
-      if rise /= er then errc := errc + 1; report "rise wrong" severity error; end if;
-      if fall /= ef then errc := errc + 1; report "fall wrong" severity error; end if;
+      if m = "1011" then de := '1'; else de := '0'; end if;
+      if detected /= de then errc := errc + 1; report "detected wrong" severity error; end if;
     end loop;
     if errc = 0 then report "Test PASS" severity note; else report "Test FAILED" severity note; end if;
     finish;

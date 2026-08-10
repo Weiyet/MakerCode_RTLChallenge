@@ -1,49 +1,39 @@
-# Shift register (SIPO)
+# Sequential logic (LFSR)
 
-**Difficulty:** ⭐⭐ · **Topics:** shifting, serial-in parallel-out
+**Difficulty:** ⭐⭐⭐ · **Topics:** feedback shift register, XOR taps
 
 ## Background
-A **shift register** moves its bits along by one each clock. A serial-in
-parallel-out (SIPO) shifter collects a serial bit stream into a parallel word — the
-receiver half of any serial link. Each clock: drop the top bit, shift everyone up,
-and drop the new `sin` into the LSB, i.e. `q <= {q[W-2:0], sin}`.
+A **Linear-Feedback Shift Register** is a shift register whose serial input is the
+XOR of selected bits (**taps**). With the right taps it cycles through all `2^N-1`
+non-zero states before repeating — a cheap pseudo-random generator used for test
+patterns, scramblers, and CRCs. This 8-bit LFSR uses taps 8,6,5,4
+(polynomial `x^8 + x^6 + x^5 + x^4 + 1`).
 
 ## The task
-Shift left, inserting `sin` at the LSB; async active-low reset clears `q`.
+`feedback = q[7]^q[5]^q[4]^q[3]`, then shift left inserting `feedback`. Seed to
+`8'hFF` on reset; advance only when `en=1`.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `clk`, `rst_n` | input | 1 | clock / async reset |
-| `sin` | input  | 1 | serial input |
-| `q`   | output | W | parallel output |
-
-**Parameter:** `W` (default 8)
-
-```wavedrom
-{ "signal": [
-  {"name":"clk","wave":"p....."},
-  {"name":"sin","wave":"01.0.1"},
-  {"name":"q[0]","wave":"0.1.0."}
-]}
-```
+| `clk`, `rst_n` | input | 1 | clock / async reset (seed = FF) |
+| `en`  | input  | 1 | advance enable |
+| `q`   | output | 8 | LFSR state |
 
 ## How to approach it
 ```systemverilog
+logic fb;
+assign fb = q[7] ^ q[5] ^ q[4] ^ q[3];
 always_ff @(posedge clk or negedge rst_n)
-    if (!rst_n) q <= '0;
-    else        q <= {q[W-2:0], sin};
+    if (!rst_n)  q <= 8'hFF;
+    else if (en) q <= {q[6:0], fb};
 ```
 
 ## Common mistakes
-- Shifting the wrong direction — `{q[W-2:0], sin}` shifts toward the MSB and
-  inserts at the LSB. `{sin, q[W-1:1]}` would be the opposite.
+- Seeding to 0 — an all-zero LFSR is a lock-up state and never moves. Seed to any
+  non-zero value.
+- Wrong tap set — only specific taps give the maximal-length sequence.
 
 ## SystemVerilog notes
-Adding a parallel-load input turns this into a PISO/universal shift register — a
-small extension of the same pattern.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0024/tb.sv 0024/solution.sv && vvp sim
-```
+`fb = ^(q & 8'b1011_1000)` is an equivalent way to express the same tap XOR using
+a reduction over a masked value.

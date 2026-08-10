@@ -1,17 +1,22 @@
-module edge_detector (
+module seq_detector_1011 (
     input  logic clk,
     input  logic rst_n,
-    input  logic sig,
-    output logic rise,
-    output logic fall
+    input  logic din,
+    output logic detected
 );
-    logic prev;
+    typedef enum logic [2:0] {S0, S1, S2, S3, S4} state_e;
+    state_e state;
+
     always_ff @(posedge clk or negedge rst_n)
-        if (!rst_n) begin
-            prev <= 1'b0; rise <= 1'b0; fall <= 1'b0;
-        end else begin
-            prev <= sig;
-            rise <=  sig & ~prev;
-            fall <= ~sig &  prev;
-        end
+        if (!rst_n) state <= S0;
+        else case (state)
+            S0: state <= din ? S1 : S0;
+            S1: state <= din ? S1 : S2;
+            S2: state <= din ? S3 : S0;
+            S3: state <= din ? S4 : S2;
+            S4: state <= din ? S1 : S2;   // overlap: last bit was 1
+            default: state <= S0;
+        endcase
+
+    assign detected = (state == S4);
 endmodule

@@ -1,51 +1,33 @@
-# Reduction operators
+# Vectors (arrays & bit/byte reverse)
 
-**Difficulty:** ⭐⭐ · **Topics:** reduction `&` `|` `^`
+**Difficulty:** ⭐⭐ · **Topics:** `for` loop in `always_comb`, byte lanes
 
 ## Background
-A **reduction operator** is a single `&`, `|`, or `^` placed *in front of one
-vector*. It folds the whole vector down to one bit by applying that operator
-between all the bits:
-- `&d`  → AND of every bit  (1 only if **all** bits are 1)
-- `|d`  → OR of every bit   (1 if **any** bit is 1)
-- `^d`  → XOR of every bit  (this is the **parity** of the word)
-
-This is different from the *bitwise* operators you saw in problem 0003: `a & b`
-combines two vectors lane-by-lane and returns a vector; `&a` combines the bits
-*within* one vector and returns a single bit.
+Two everyday vector manipulations: **bit reverse** (flip bit order, done with a
+`for` loop) and **byte reverse** (swap byte lanes, i.e. endianness). Both are
+combinational and both are cleanly expressed by indexing.
 
 ## The task
-For an 8-bit input compute `all_ones = &in`, `any_one = |in`, `parity = ^in`.
+Build `reverser` for a 32-bit input `d`:
+- `bitrev` = `d` with its 32 bits reversed (bit 0 ↔ bit 31, …).
+- `byterev` = `d` with its 4 bytes reversed (byte 0 ↔ byte 3, byte 1 ↔ byte 2).
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `in`       | input  | 8 | data |
-| `all_ones` | output | 1 | `&in` |
-| `any_one`  | output | 1 | `|in` |
-| `parity`   | output | 1 | `^in` |
+| `d`       | input  | 32 | data in |
+| `bitrev`  | output | 32 | bit-reversed |
+| `byterev` | output | 32 | byte-lane reversed |
 
 ## How to approach it
 ```systemverilog
-assign all_ones = &in;
-assign any_one  = |in;
-assign parity   = ^in;
-```
+always_comb
+    for (int i = 0; i < 32; i++)
+        bitrev[i] = d[31 - i];
 
-## Worked example
-`in = 8'b1011_0010`: `all_ones=0` (not all bits 1), `any_one=1`, `parity = 1^0^1^1^0^0^1^0 = 0`.
+assign byterev = {d[7:0], d[15:8], d[23:16], d[31:24]};
+```
 
 ## Common mistakes
-- Writing `in & in` (bitwise, returns 8 bits) when you meant `&in` (reduction,
-  returns 1 bit).
-- Expecting `parity` to mean "even/odd count" directly — `^in` is 1 when the
-  number of set bits is **odd**.
-
-## SystemVerilog notes
-Reduction has cousins `~&` (NAND-reduce), `~|` (NOR-reduce), `~^` (XNOR-reduce).
-`^in` is the classic one-liner for a parity bit.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0006/tb.sv 0006/solution.sv && vvp sim
-```
+- Off-by-one in the bit-reverse index (`31 - i`).
+- Swapping bytes with the wrong slice boundaries.

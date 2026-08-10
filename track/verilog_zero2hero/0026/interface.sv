@@ -1,8 +1,9 @@
-module lfsr8 (
-    input  logic       clk,
-    input  logic       rst_n,
-    input  logic       en,
-    output logic [7:0] q
+module edge_detector (
+    input  logic clk,
+    input  logic rst_n,
+    input  logic sig,
+    output logic rise,
+    output logic fall
 );
     // your implementation here
 

@@ -1,19 +1,17 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use ieee.math_real.all;
 
-entity popcount is
-  generic (
-    WIDTH : integer := 8
-  );
+entity dff_reset is
   port (
-    d     : in  std_logic_vector(WIDTH-1 downto 0);
-    count : out std_logic_vector(integer(ceil(log2(real(WIDTH+1))))-1 downto 0)
+    clk     : in  std_logic;
+    rst_n   : in  std_logic;
+    d       : in  std_logic;
+    q_sync  : out std_logic;
+    q_async : out std_logic
   );
-end entity popcount;
+end entity dff_reset;
 
-architecture rtl of popcount is
+architecture rtl of dff_reset is
 begin
   -- your implementation here
 

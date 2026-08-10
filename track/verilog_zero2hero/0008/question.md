@@ -1,49 +1,57 @@
-# Vector reverse
+# Combinational logic (ripple-carry adder, generate)
 
-**Difficulty:** ⭐⭐ · **Topics:** `always_comb`, `for` loop, indexing
+**Difficulty:** ⭐⭐⭐ · **Topics:** `parameter`, `generate`/`genvar`, carry chain
 
 ## Background
-Some wiring patterns are tedious to write bit-by-bit. A synthesizable **`for`
-loop** inside an `always_comb` block lets you describe them compactly. The key
-idea: this loop is **unrolled at build time** — it is *not* a runtime loop. The
-synthesizer expands it into plain parallel wiring, one statement per iteration.
-
-Reversing a vector (`out[i] = in[7-i]`) is a perfect example: 8 simple
-connections written as one loop.
+To add `WIDTH`-bit numbers, chain `WIDTH` full adders: the carry "ripples" from
+the LSB stage up to the MSB. Rather than copy-paste stages, use a **`generate`
+loop** over a **`genvar`**, which the tool unrolls at elaboration time into that
+many stages. The width comes from a **`parameter`**, so one description scales to
+any size.
 
 ## The task
-Reverse the bit order of an 8-bit vector.
+Add two `WIDTH`-bit numbers plus `cin`, producing `sum` and `cout`, built from a
+generated carry chain.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `in`  | input  | 8 | data |
-| `out` | output | 8 | bit-reversed data |
+| `a`, `b` | input  | WIDTH | operands |
+| `cin`    | input  | 1     | carry in |
+| `sum`    | output | WIDTH | result |
+| `cout`   | output | 1     | carry out |
+
+**Parameter:** `WIDTH` (default 4)
+
+```mermaid
+graph LR
+    cin --> FA0 --> FA1 --> FA2 --> FA3 --> cout
+    FA0 --> s0[sum0]
+    FA1 --> s1[sum1]
+    FA2 --> s2[sum2]
+    FA3 --> s3[sum3]
+```
 
 ## How to approach it
+1. Declare an internal carry vector one bit wider than the operands:
+   `logic [WIDTH:0] carry;` with `carry[0] = cin` and `cout = carry[WIDTH]`.
+2. Generate one full-adder stage per bit:
 ```systemverilog
-always_comb begin
-    for (int i = 0; i < 8; i++)
-        out[i] = in[7-i];
-end
+genvar i;
+generate
+    for (i = 0; i < WIDTH; i++) begin : gen_fa
+        assign sum[i]     = a[i] ^ b[i] ^ carry[i];
+        assign carry[i+1] = (a[i] & b[i]) | (a[i] & carry[i]) | (b[i] & carry[i]);
+    end
+endgenerate
 ```
-Inside a combinational `always_comb`, use blocking `=` (not `<=`).
-
-## Worked example
-`in = 8'b1100_0001` → `out = 8'b1000_0011`.
 
 ## Common mistakes
-- Using non-blocking `<=` in combinational logic — use `=` in `always_comb`.
-- Off-by-one in the index (`in[8-i]` reads out of range).
-- Forgetting that every output bit must be assigned, or a latch may be inferred
-  (here the loop covers all 8, so we are safe).
+- Forgetting the extra carry bit (`carry` must be `WIDTH+1` wide).
+- Using a normal `for` (procedural) where a `generate` is intended — for building
+  repeated *structure* with `genvar`, use `generate`.
 
 ## SystemVerilog notes
-`always_comb` builds the sensitivity list for you and the tool will *warn* if the
-block accidentally infers a latch — a big reason to prefer it over the old
-`always @(*)`.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0008/tb.sv 0008/solution.sv && vvp sim
-```
+`generate` runs at *elaboration* (build) time, so the loop bound must be a
+constant/parameter. The named block `gen_fa` gives each stage a hierarchical name
+you will see in the waveform.

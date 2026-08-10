@@ -1,24 +1,31 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity priority_encoder is
+entity ctrl_pack is
   port (
-    d     : in  std_logic_vector(3 downto 0);
-    pos   : out std_logic_vector(1 downto 0);
-    valid : out std_logic
+    opcode : in  std_logic_vector(3 downto 0);
+    src    : in  std_logic_vector(2 downto 0);
+    dst    : in  std_logic_vector(2 downto 0);
+    imm    : in  std_logic_vector(5 downto 0);
+    word   : out std_logic_vector(15 downto 0)
   );
-end entity priority_encoder;
+end entity ctrl_pack;
 
-architecture rtl of priority_encoder is
+architecture rtl of ctrl_pack is
+  type ctrl_t is record
+    opcode : std_logic_vector(3 downto 0);
+    src    : std_logic_vector(2 downto 0);
+    dst    : std_logic_vector(2 downto 0);
+    imm    : std_logic_vector(5 downto 0);
+  end record;
 begin
   process(all)
+    variable c : ctrl_t;
   begin
-    valid <= '1';
-    if    d(3) = '1' then pos <= "11";
-    elsif d(2) = '1' then pos <= "10";
-    elsif d(1) = '1' then pos <= "01";
-    elsif d(0) = '1' then pos <= "00";
-    else  pos <= "00"; valid <= '0';
-    end if;
+    c.opcode := opcode;
+    c.src    := src;
+    c.dst    := dst;
+    c.imm    := imm;
+    word <= c.opcode & c.src & c.dst & c.imm;
   end process;
 end architecture rtl;

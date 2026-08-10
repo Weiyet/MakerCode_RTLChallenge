@@ -1,10 +1,8 @@
-module shift_register #(
-    parameter int W = 8
-) (
-    input  logic         clk,
-    input  logic         rst_n,
-    input  logic         sin,
-    output logic [W-1:0] q
+module lfsr8 (
+    input  logic       clk,
+    input  logic       rst_n,
+    input  logic       en,
+    output logic [7:0] q
 );
     // your implementation here
 

@@ -1,17 +1,8 @@
-module logic_gates (
-    input  logic a,
-    input  logic b,
-    output logic y_and,
-    output logic y_or,
-    output logic y_xor,
-    output logic y_nand,
-    output logic y_nor,
-    output logic y_xnor
+module vector_split (
+    input  logic [15:0] in,
+    output logic [7:0]  hi,
+    output logic [7:0]  lo
 );
-    assign y_and  =  (a & b);
-    assign y_or   =  (a | b);
-    assign y_xor  =  (a ^ b);
-    assign y_nand = ~(a & b);
-    assign y_nor  = ~(a | b);
-    assign y_xnor = ~(a ^ b);
+    assign hi = in[15:8];
+    assign lo = in[7:0];
 endmodule

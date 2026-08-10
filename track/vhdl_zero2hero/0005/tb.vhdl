@@ -7,21 +7,26 @@ entity tb is
 end entity tb;
 
 architecture sim of tb is
-  signal d      : std_logic_vector(15 downto 0) := (others => '0');
-  signal hi, lo : std_logic_vector(7 downto 0);
+  signal a, b      : std_logic_vector(7 downto 0) := (others => '0');
+  signal cat       : std_logic_vector(15 downto 0);
+  signal rep4      : std_logic_vector(31 downto 0);
+  signal nib_swap  : std_logic_vector(7 downto 0);
 begin
-  dut : entity work.vector_split port map (d => d, hi => hi, lo => lo);
+  dut : entity work.concat_replicate port map (a => a, b => b, cat => cat, rep4 => rep4, nib_swap => nib_swap);
 
   process
     variable errc : integer := 0;
-    variable v    : unsigned(15 downto 0) := (others => '0');
+    variable va, vb : unsigned(7 downto 0) := (others => '0');
   begin
-    for i in 0 to 30 loop
-      d <= std_logic_vector(v);
+    for i in 0 to 40 loop
+      a <= std_logic_vector(va);
+      b <= std_logic_vector(vb);
       wait for 5 ns;
-      if hi /= d(15 downto 8) then errc := errc + 1; report "hi wrong" severity error; end if;
-      if lo /= d(7 downto 0)  then errc := errc + 1; report "lo wrong" severity error; end if;
-      v := v + to_unsigned(4369, 16);
+      if cat      /= (a & b)                       then errc := errc + 1; report "cat wrong"      severity error; end if;
+      if rep4     /= (a & a & a & a)               then errc := errc + 1; report "rep4 wrong"     severity error; end if;
+      if nib_swap /= (a(3 downto 0) & a(7 downto 4)) then errc := errc + 1; report "nib_swap wrong" severity error; end if;
+      va := va + to_unsigned(37, 8);
+      vb := vb + to_unsigned(91, 8);
     end loop;
     if errc = 0 then report "Test PASS" severity note; else report "Test FAILED" severity note; end if;
     finish;

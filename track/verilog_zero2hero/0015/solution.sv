@@ -1,16 +1,23 @@
-module priority_encoder (
-    input  logic [3:0] in,
-    output logic [1:0] pos,
-    output logic       valid
+module ctrl_pack (
+    input  logic [3:0]  opcode,
+    input  logic [2:0]  src,
+    input  logic [2:0]  dst,
+    input  logic [5:0]  imm,
+    output logic [15:0] word
 );
+    typedef struct packed {
+        logic [3:0] opcode;
+        logic [2:0] src;
+        logic [2:0] dst;
+        logic [5:0] imm;
+    } ctrl_t;
+
+    ctrl_t c;
     always_comb begin
-        valid = 1'b1;
-        casez (in)
-            4'b1???: pos = 2'd3;
-            4'b01??: pos = 2'd2;
-            4'b001?: pos = 2'd1;
-            4'b0001: pos = 2'd0;
-            default: begin pos = 2'd0; valid = 1'b0; end
-        endcase
+        c.opcode = opcode;
+        c.src    = src;
+        c.dst    = dst;
+        c.imm    = imm;
+        word     = c;
     end
 endmodule

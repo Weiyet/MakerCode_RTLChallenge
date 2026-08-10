@@ -1,16 +1,17 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity lfsr8 is
+entity edge_detector is
   port (
     clk   : in  std_logic;
     rst_n : in  std_logic;
-    en    : in  std_logic;
-    q     : out std_logic_vector(7 downto 0)
+    sig   : in  std_logic;
+    rise  : out std_logic;
+    fall  : out std_logic
   );
-end entity lfsr8;
+end entity edge_detector;
 
-architecture rtl of lfsr8 is
+architecture rtl of edge_detector is
 begin
   -- your implementation here
 

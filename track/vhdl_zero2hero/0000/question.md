@@ -1,52 +1,29 @@
-# Wire
+# Combinational logic (wires, assign & constants)
 
-**Difficulty:** ⭐ (Getting started) · **Topics:** entity/architecture, `signal`, concurrent assignment
+**Difficulty:** ⭐ · **Topics:** entity/architecture, concurrent assignment, constants
 
 ## Background
-VHDL describes hardware, not a sequential program. A design unit has two parts:
-an **entity** (its name and its **ports** — the inputs and outputs) and an
-**architecture** (the body describing behaviour). The simplest circuit is a
-**wire**, a permanent connection, written as a **concurrent signal assignment**
-in the architecture body. "Concurrent" means it is always active: whenever the
-input changes, the output follows.
-
-> `in` and `out` are VHDL **reserved words** (port directions), so the data ports
-> are named `a` and `y`.
+The most basic block is a signal driven by a **concurrent assignment** (`<=`
+outside a process). An entity declares **ports**; the architecture drives outputs.
+Outputs can also be tied to **constants** with the bit literals `'0'` and `'1'`.
 
 ## The task
-Build `wire_passthrough` where `y` always equals `a`.
+Build `wires_const`: pass `a` straight to `y`, and drive `one` high and `zero` low.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `a` | in  | std_logic | source |
-| `y` | out | std_logic | copy of `a` |
-
-```mermaid
-graph LR
-    a([a]) --- y([y])
-```
+| `a`    | in  | std_logic | data in |
+| `y`    | out | std_logic | copy of `a` |
+| `one`  | out | std_logic | constant `'1'` |
+| `zero` | out | std_logic | constant `'0'` |
 
 ## How to approach it
-The entity/architecture skeleton is given; add one concurrent assignment:
 ```vhdl
-y <= a;
+y    <= a;
+one  <= '1';
+zero <= '0';
 ```
-
-## Common mistakes
-- Using `:=` (variable assignment) where `<=` (signal assignment) is required for
-  a signal/port.
-- Putting the assignment outside the `architecture ... begin ... end` region.
 
 ## VHDL notes
-`std_logic` (from `ieee.std_logic_1164`) is the 9-value logic type used for
-synthesis. Remember the two assignment operators: `<=` for **signals**, `:=` for
-**variables** (seen later inside processes).
-
-## Run it (GHDL)
-```bash
-# from track/vhdl_zero2hero/
-ghdl -a --std=08 0000/solution.vhdl 0000/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
-A correct run prints `Test PASS`. Swap `solution.vhdl` for `interface.vhdl` to test
-your own answer.
+Concurrent assignments run in parallel, not top-to-bottom — order does not matter.

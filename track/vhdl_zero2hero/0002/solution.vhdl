@@ -1,14 +1,16 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity not_gate is
+entity mux2to1 is
   port (
-    a : in  std_logic;
-    y : out std_logic
+    a   : in  std_logic;
+    b   : in  std_logic;
+    sel : in  std_logic;
+    y   : out std_logic
   );
-end entity not_gate;
+end entity mux2to1;
 
-architecture rtl of not_gate is
+architecture rtl of mux2to1 is
 begin
-  y <= not a;
+  y <= b when sel = '1' else a;
 end architecture rtl;

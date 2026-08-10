@@ -1,8 +1,9 @@
-module popcount #(
-    parameter int WIDTH = 8
-) (
-    input  logic [WIDTH-1:0]            in,
-    output logic [$clog2(WIDTH+1)-1:0]  count
+module dff_reset (
+    input  logic clk,
+    input  logic rst_n,
+    input  logic d,
+    output logic q_sync,
+    output logic q_async
 );
     // your implementation here
 

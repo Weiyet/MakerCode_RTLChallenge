@@ -1,26 +1,18 @@
 `timescale 1ns/1ps
 module tb;
     localparam TB_SIM_TIMEOUT = 100000;
-    logic [7:0]  a, b;
-    logic [15:0] cat;
-    logic [31:0] rep4;
-    logic [7:0]  nib_swap;
+    logic a, b, cin, h_sum, h_cout, sum, cout;
     int ERR_COUNT = 0;
-
-    concat_replicate DUT (.a(a), .b(b), .cat(cat), .rep4(rep4), .nib_swap(nib_swap));
-
+    adders DUT (.a(a), .b(b), .cin(cin), .h_sum(h_sum), .h_cout(h_cout), .sum(sum), .cout(cout));
     initial begin
-        for (int i = 0; i < 20; i++) begin
-            a = $random; b = $random;
-            #5;
-            if (cat      !== {a, b})             begin ERR_COUNT++; $error("%0tns cat=%h",  $time, cat);  end
-            if (rep4     !== {4{a}})             begin ERR_COUNT++; $error("%0tns rep4=%h", $time, rep4); end
-            if (nib_swap !== {a[3:0], a[7:4]})   begin ERR_COUNT++; $error("%0tns nib_swap=%h", $time, nib_swap); end
+        for (int i = 0; i < 8; i++) begin
+            {a, b, cin} = i[2:0]; #5;
+            if ({h_cout, h_sum} !== (a + b))       begin ERR_COUNT++; $error("half a=%b b=%b", a, b); end
+            if ({cout,  sum}    !== (a + b + cin)) begin ERR_COUNT++; $error("full a=%b b=%b cin=%b", a, b, cin); end
             #5;
         end
         check_result;
     end
-
     task check_result;
     begin
         if (ERR_COUNT > 0) $display("Test failed with %0d errors.", ERR_COUNT);
@@ -28,7 +20,6 @@ module tb;
         $finish;
     end
     endtask
-
     string filename;
     initial begin
         if ($value$plusargs("VCDFILE=%s", filename)) begin

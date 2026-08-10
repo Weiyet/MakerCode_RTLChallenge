@@ -1,48 +1,41 @@
-# BCD to 7-segment
+# Parameters (generic population count)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** `case`, look-up
+**Difficulty:** ⭐⭐⭐ · **Topics:** `generic`, `math_real` sizing, loop accumulate
 
 ## Background
-A seven-segment display shows a digit by lighting segments `a`..`g`. Mapping a
-4-bit digit to the segment pattern is a pure **look-up table**, written as a
-`case`. This uses an **active-high** display with `seg(6 downto 0) = {g,f,e,d,c,b,a}`
-(bit 0 = segment `a`).
+"Popcount" = number of set bits. Counting `WIDTH` bits gives 0..WIDTH, needing
+`ceil(log2(WIDTH+1))` output bits. VHDL has no `$clog2`, so size the port with
+`integer(ceil(log2(real(WIDTH+1))))` from `ieee.math_real`. Inside, accumulate
+into an `integer` and convert back.
 
 ## The task
-Digits 0-9 use the standard pattern; 10-15 output all-off.
+Return the number of 1s in a `WIDTH`-bit input.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `bcd` | in  | std_logic_vector(3 downto 0) | digit |
-| `seg` | out | std_logic_vector(6 downto 0) | segments |
+| `d`     | in  | std_logic_vector(WIDTH-1 downto 0) | data |
+| `count` | out | std_logic_vector(ceil(log2(WIDTH+1))-1 downto 0) | number of 1s |
 
-## Segment values ({g,f,e,d,c,b,a}, hex)
-`0=3F 1=06 2=5B 3=4F 4=66 5=6D 6=7D 7=07 8=7F 9=6F`
+**Generic:** `WIDTH` (default 8)
 
 ## How to approach it
 ```vhdl
 process(all)
+    variable c : integer;
 begin
-    case bcd is
-        when "0000" => seg <= "0111111";  -- 3F
-        -- ... 1 through 9 ...
-        when others => seg <= "0000000";
-    end case;
+    c := 0;
+    for i in d'range loop
+        if d(i) = '1' then c := c + 1; end if;
+    end loop;
+    count <= std_logic_vector(to_unsigned(c, count'length));
 end process;
 ```
-Use 7-bit **binary** string literals so the width matches `seg`.
 
 ## Common mistakes
-- Using an 8-bit hex literal (`x"3F"`) for a 7-bit port — width mismatch. Use the
-  7-bit binary strings.
-- Getting the segment order/polarity wrong.
+- Under-sizing `count` (miss the all-ones = WIDTH case).
+- Forgetting `use ieee.math_real.all;` for `ceil`/`log2`.
 
 ## VHDL notes
-This `case` synthesizes to a small look-up. `when others` covers both the
-non-decimal codes and any metavalue inputs.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0016/solution.vhdl 0016/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+`count'length` gives the port width, so `to_unsigned(c, count'length)` always
+matches — no magic numbers.

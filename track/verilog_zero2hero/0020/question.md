@@ -1,54 +1,35 @@
-# Gray / binary codec (functions)
+# Sequential logic (enable & load)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** `function automatic`, reuse
+**Difficulty:** ⭐⭐ · **Topics:** clock enable, hold
 
 ## Background
-When repeated combinational math shows up, wrap it in a **`function`**. Functions
-have no time (`#`) and return a value, so they synthesize to pure logic and keep
-your code DRY. Here we convert between binary and **Gray code**, where consecutive
-values differ in exactly one bit — useful for pointers crossing clock domains
-(you will see this in real async FIFOs).
-
-- binary → Gray: `g = b ^ (b >> 1)`
-- Gray → binary: MSB copies through, then `b[i] = b[i+1] ^ g[i]`
+Often a register should update only on certain cycles and **hold** its value
+otherwise. A **clock enable** does this: when `en` is high, load `d`; when low,
+keep the current value. The trick is simply to have *no `else`* on the enable —
+the flop then retains its state.
 
 ## The task
-Provide both conversions.
+`W`-bit register with async active-low reset and a load enable.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `bin`     | input  | W | binary in |
-| `gray_in` | input  | W | Gray in |
-| `gray`    | output | W | Gray of `bin` |
-| `bin_out` | output | W | binary of `gray_in` |
+| `clk`, `rst_n` | input | 1 | clock / async reset |
+| `en`  | input  | 1 | load enable |
+| `d`   | input  | W | data |
+| `q`   | output | W | stored value |
 
-**Parameter:** `W` (default 4)
+**Parameter:** `W` (default 8)
 
 ## How to approach it
 ```systemverilog
-function automatic logic [W-1:0] bin2gray(input logic [W-1:0] b);
-    return b ^ (b >> 1);
-endfunction
-function automatic logic [W-1:0] gray2bin(input logic [W-1:0] g);
-    logic [W-1:0] b;
-    b[W-1] = g[W-1];
-    for (int i = W-2; i >= 0; i--) b[i] = b[i+1] ^ g[i];
-    return b;
-endfunction
-assign gray = bin2gray(bin);
-assign bin_out = gray2bin(gray_in);
+always_ff @(posedge clk or negedge rst_n)
+    if (!rst_n)  q <= '0;
+    else if (en) q <= d;   // no else -> holds when en=0
 ```
 
 ## Common mistakes
-- gray2bin is a *running* XOR from the MSB down — a single `g ^ (g>>1)` does not
-  invert Gray coding.
-
-## SystemVerilog notes
-`function automatic` gives each call its own storage (safe for reuse/recursion).
-Functions may contain loops and locals but no timing controls.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0020/tb.sv 0020/solution.sv && vvp sim
-```
+- Adding an `else q <= q;` — harmless but redundant; omitting the else already
+  means "hold".
+- Gating the *clock* itself instead of using a data enable (clock gating is a
+  specialised technique; a data enable is the safe default).

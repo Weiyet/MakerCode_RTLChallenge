@@ -1,50 +1,45 @@
-# D flip-flop
+# Sequential logic (signal vs variable)
 
-**Difficulty:** ⭐⭐ · **Topics:** clocked `process`, `rising_edge`
+**Difficulty:** ⭐⭐⭐ · **Topics:** `<=` signals vs `:=` variables, scheduling
 
 ## Background
-Combinational logic follows its inputs instantly; a **flip-flop** adds memory — it
-samples `d` on the rising clock edge and holds it. This is the atom of sequential
-logic. In VHDL you write it as a `process(clk)` guarded by `rising_edge(clk)`,
-using signal assignment `<=`.
+VHDL has two kinds of assignment, and the difference is exactly the VHDL version
+of "blocking vs non-blocking":
+
+- **Signal `<=`** — the update is *scheduled* and takes effect at the end of the
+  process step. Reads elsewhere in the same step see the **old** value. This is
+  what registers/shift chains want.
+- **Variable `:=`** — updates **immediately**; the next line sees the new value.
+
+Build a shift chain with **signals** and each stage sees its neighbour's *old*
+value, so data delays one stage per clock. Build it with variables and the chain
+collapses (every stage equals the input).
 
 ## The task
-On each rising edge of `clk`, `q` takes `d`.
+Build `shift3`, a 3-stage shift register: each clock, stage 0 takes `din`, stage 1
+takes the old stage 0, stage 2 the old stage 1. Use **signal** assignments.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
 | `clk` | in  | std_logic | clock |
-| `d`   | in  | std_logic | data |
-| `q`   | out | std_logic | registered data |
-
-```wavedrom
-{ "signal": [
-  {"name":"clk","wave":"p......"},
-  {"name":"d",  "wave":"0.1..0."},
-  {"name":"q",  "wave":"0..1..0"}
-]}
-```
+| `din` | in  | std_logic | serial in |
+| `q`   | out | std_logic_vector(2:0) | `q(k)` = din delayed k+1 cycles |
 
 ## How to approach it
 ```vhdl
-process(clk)
-begin
-    if rising_edge(clk) then
-        q <= d;
-    end if;
+signal r : std_logic_vector(2 downto 0) := "000";
+...
+process(clk) begin
+  if rising_edge(clk) then
+    r(0) <= din;
+    r(1) <= r(0);   -- sees OLD r(0): signal semantics
+    r(2) <= r(1);
+  end if;
 end process;
+q <= r;
 ```
 
 ## Common mistakes
-- Assigning outside the `if rising_edge(clk)` guard (creates a latch or a wire).
-- Using `:=` on a signal — flops use `<=`.
-
-## VHDL notes
-`rising_edge`/`falling_edge` (from `std_logic_1164`) are the idiomatic edge tests,
-safer than `clk'event and clk='1'`.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0021/solution.vhdl 0021/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+- Using a **variable** with `:=` for the chain — each line sees the new value, so
+  all three stages become `din` and the staggered-delay test fails.

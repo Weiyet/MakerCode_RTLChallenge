@@ -1,57 +1,46 @@
-# Packed struct
+# Sequential logic (D flip-flop)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** `struct packed`, `typedef`, bit layout
+**Difficulty:** ⭐⭐ · **Topics:** `always_ff`, non-blocking `<=`, clock edge
 
 ## Background
-A **`struct packed`** groups named fields but is still, underneath, one
-bit-vector — so you can assign it to a plain `logic` bus and the fields land in
-declaration order, MSB first. This is perfect for instruction words, packet
-headers, or any format where named fields beat magic bit-ranges.
+Everything so far was **combinational** — outputs follow inputs instantly. A
+**flip-flop** adds *memory*: it samples its input on the rising clock edge and
+holds that value until the next edge. This is the atom of all sequential logic.
+Describe it with `always_ff @(posedge clk)` and the **non-blocking** assignment
+`<=`, which models "all flops sample together, then update together".
 
 ## The task
-Pack a 16-bit control word from four fields:
-
-| bits    | field  |
-|---------|--------|
-| [15:12] | opcode |
-| [11:9]  | src    |
-| [8:6]   | dst    |
-| [5:0]   | imm    |
+On each rising edge of `clk`, `q` takes `d`.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `opcode` | input  | 4 | operation |
-| `src`    | input  | 3 | source reg |
-| `dst`    | input  | 3 | dest reg |
-| `imm`    | input  | 6 | immediate |
-| `word`   | output | 16 | packed control word |
+| `clk` | input  | 1 | clock |
+| `d`   | input  | 1 | data |
+| `q`   | output | 1 | registered data |
+
+```wavedrom
+{ "signal": [
+  {"name": "clk", "wave": "p......"},
+  {"name": "d",   "wave": "0.1..0."},
+  {"name": "q",   "wave": "0..1..0"}
+]}
+```
+Notice `q` follows `d` but shifted to the next clock edge.
 
 ## How to approach it
 ```systemverilog
-typedef struct packed {
-    logic [3:0] opcode;
-    logic [2:0] src;
-    logic [2:0] dst;
-    logic [5:0] imm;
-} ctrl_t;
-ctrl_t c;
-always_comb begin
-    c.opcode = opcode; c.src = src; c.dst = dst; c.imm = imm;
-    word = c;            // flatten to 16 bits
-end
+always_ff @(posedge clk)
+    q <= d;
 ```
 
 ## Common mistakes
-- Field order: the *first* field declared occupies the *most-significant* bits.
-- Widths must sum to the bus width (4+3+3+6 = 16).
+- Using blocking `=` for state — always use `<=` in `always_ff`. Mixing them
+  causes simulation/synthesis mismatches and race-like bugs.
+- Reading `q` combinationally elsewhere and expecting the *new* value in the same
+  cycle — it updates only at the edge.
 
 ## SystemVerilog notes
-Because a packed struct *is* a vector, you can also slice or index it, and pass it
-through ports. `struct packed` is the readable alternative to hand-managing bit
-ranges.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0018/tb.sv 0018/solution.sv && vvp sim
-```
+`always_ff` tells the tool "this is a register"; it will error if the body cannot
+be synthesized as flops. Combinational logic uses `always_comb` with `=`;
+sequential uses `always_ff` with `<=`.

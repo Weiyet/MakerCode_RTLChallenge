@@ -1,21 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity mux4to1 is
-  generic (
-    W : integer := 8
-  );
-  port (
-    d0  : in  std_logic_vector(W-1 downto 0);
-    d1  : in  std_logic_vector(W-1 downto 0);
-    d2  : in  std_logic_vector(W-1 downto 0);
-    d3  : in  std_logic_vector(W-1 downto 0);
-    sel : in  std_logic_vector(1 downto 0);
-    y   : out std_logic_vector(W-1 downto 0)
-  );
-end entity mux4to1;
+entity tristate_buf is
+  port (oe   : in  std_logic;
+        din  : in  std_logic_vector(7 downto 0);
+        dout : out std_logic_vector(7 downto 0));
+end entity tristate_buf;
 
-architecture rtl of mux4to1 is
+architecture rtl of tristate_buf is
 begin
   -- your implementation here
 

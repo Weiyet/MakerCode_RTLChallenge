@@ -1,19 +1,20 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity gray_codec is
+entity enable_register is
   generic (
-    W : integer := 4
+    W : integer := 8
   );
   port (
-    bin     : in  std_logic_vector(W-1 downto 0);
-    gray_in : in  std_logic_vector(W-1 downto 0);
-    gray    : out std_logic_vector(W-1 downto 0);
-    bin_out : out std_logic_vector(W-1 downto 0)
+    clk   : in  std_logic;
+    rst_n : in  std_logic;
+    en    : in  std_logic;
+    d     : in  std_logic_vector(W-1 downto 0);
+    q     : out std_logic_vector(W-1 downto 0)
   );
-end entity gray_codec;
+end entity enable_register;
 
-architecture rtl of gray_codec is
+architecture rtl of enable_register is
 begin
   -- your implementation here
 

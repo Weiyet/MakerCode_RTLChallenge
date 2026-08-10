@@ -1,50 +1,35 @@
-# 2-to-1 Multiplexer
+# Vectors (reduction operators)
 
-**Difficulty:** ⭐⭐ · **Topics:** conditional signal assignment
+**Difficulty:** ⭐⭐ · **Topics:** VHDL-2008 unary reduction
 
 ## Background
-A **multiplexer** is a controlled switch: `sel` chooses which input reaches the
-output. It is the most common datapath element — every "choose A or B" is a mux.
-VHDL's **conditional signal assignment** (`... when ... else ...`) reads like the
-truth table.
+A **reduction** folds a whole vector into one bit. **VHDL-2008** added unary
+operators for this: `and d`, `or d`, `xor d` each return a single `std_logic`.
+(Before 2008 you wrote a loop.) This is distinct from the *binary* operators of
+problem 0003, which combine two vectors lane-by-lane.
 
 ## The task
-`sel='0'` selects `a`; `sel='1'` selects `b`.
+`all_ones = and d`, `any_one = or d`, `parity = xor d` for an 8-bit input.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `a`   | in  | std_logic | data 0 |
-| `b`   | in  | std_logic | data 1 |
-| `sel` | in  | std_logic | select |
-| `y`   | out | std_logic | selected data |
-
-```mermaid
-graph LR
-    a([a]) --> M{{"MUX"}}
-    b([b]) --> M
-    sel([sel]) --> M
-    M --> y([y])
-```
+| `d`        | in  | std_logic_vector(7 downto 0) | data |
+| `all_ones` | out | std_logic | `and d` |
+| `any_one`  | out | std_logic | `or d` |
+| `parity`   | out | std_logic | `xor d` |
 
 ## How to approach it
 ```vhdl
-y <= b when sel = '1' else a;
+all_ones <= and d;
+any_one  <= or d;
+parity   <= xor d;
 ```
 
 ## Common mistakes
-- Comparing with `=` in the condition (VHDL uses `=` for equality, not `==`).
-- Swapping the branches and selecting the wrong input.
+- Compiling without `--std=08` — the unary reduction operators are a 2008 feature.
+- Confusing `d and d` (binary, 8 bits) with `and d` (reduction, 1 bit).
 
 ## VHDL notes
-The same form widens to buses (`y <= b_bus when sel = '1' else a_bus;`) and chains
-for bigger muxes, though a `case` in a process is clearer past two inputs
-(problem 0013).
-
-## Run it (GHDL)
-```bash
-# from track/vhdl_zero2hero/
-ghdl -a --std=08 0004/solution.vhdl 0004/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
-A correct run prints `Test PASS`. Swap `solution.vhdl` for `interface.vhdl` to test
-your own answer.
+`xor d` gives the parity (1 when an odd number of bits are set). Pre-2008 code
+uses a `for` loop over the bits instead.

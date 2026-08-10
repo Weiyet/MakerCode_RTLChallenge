@@ -1,56 +1,66 @@
-# Edge detector (one-pulse)
+# Finite state machine (Moore sequence detector)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** registering history, one-cycle pulse
+**Difficulty:** ⭐⭐⭐⭐ · **Topics:** enum FSM, Moore output, overlapping
 
 ## Background
-To react to a *change* in a signal (a button press, a flag going high) you compare
-its current value with its value one clock ago. Store the previous value in a
-flip-flop, then a rising edge is "now 1 AND was 0" and a falling edge is "now 0
-AND was 1". The result is a clean **one-cycle pulse** per edge — the standard way
-to turn a level into an event.
+A **finite state machine** remembers "how far along a pattern we are". Each clock
+it consumes one input bit and moves between named states; when it reaches the
+accepting state, it flags a match. This is a **Moore** machine: the output depends
+*only on the current state*, so `detected` is a clean registered signal.
+
+We detect `1011` with **overlap** allowed (so `1011011` fires twice). The trick
+for overlap: from the accepting state, the trailing `1` is also the start of a new
+potential match.
 
 ## The task
-Register `sig` into `prev`; output registered `rise` and `fall` pulses. Async
-active-low reset.
+Assert `detected` for one cycle whenever the last four serial bits equal `1011`.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `clk`, `rst_n` | input | 1 | clock / reset |
-| `sig`  | input  | 1 | monitored signal |
-| `rise` | output | 1 | rising-edge pulse |
-| `fall` | output | 1 | falling-edge pulse |
+| `clk`, `rst_n` | input | 1 | clock / async reset |
+| `din`      | input  | 1 | serial data |
+| `detected` | output | 1 | pattern seen |
 
-```wavedrom
-{ "signal": [
-  {"name":"clk","wave":"p......"},
-  {"name":"sig","wave":"0.1..0."},
-  {"name":"rise","wave":"0..10.."},
-  {"name":"fall","wave":"0....10"}
-]}
+```mermaid
+stateDiagram-v2
+    [*] --> S0
+    S0 --> S1: 1
+    S0 --> S0: 0
+    S1 --> S1: 1
+    S1 --> S2: 0
+    S2 --> S3: 1
+    S2 --> S0: 0
+    S3 --> S4: 1
+    S3 --> S2: 0
+    S4 --> S1: 1
+    S4 --> S2: 0
+    note right of S4: detected = 1
 ```
 
 ## How to approach it
+1. Name the states (got-nothing, got-`1`, got-`10`, got-`101`, got-`1011`) with an
+   `enum`.
+2. Register the state in `always_ff` using a `case`.
+3. Drive `detected = (state == S4)` combinationally (Moore).
 ```systemverilog
+typedef enum logic [2:0] {S0,S1,S2,S3,S4} state_e;
+state_e state;
 always_ff @(posedge clk or negedge rst_n)
-    if (!rst_n) begin prev <= 0; rise <= 0; fall <= 0; end
-    else begin
-        prev <= sig;
-        rise <=  sig & ~prev;
-        fall <= ~sig &  prev;
-    end
+    if (!rst_n) state <= S0;
+    else case (state)
+        S0: state <= din ? S1 : S0;
+        // ...
+        S4: state <= din ? S1 : S2;   // overlap
+    endcase
+assign detected = (state == S4);
 ```
 
 ## Common mistakes
-- Comparing `sig` against itself (forgetting the registered `prev`).
-- A wider pulse than one cycle — that means `prev` is not updating each clock.
+- Wrong overlap transitions from the accepting state (drop them and `1011011`
+  only fires once).
+- Making it Mealy by accident (`detected` depending on `din`).
 
 ## SystemVerilog notes
-Registering the outputs (as here) gives a glitch-free one-cycle pulse. A purely
-combinational `rise = sig & ~prev` also works but can glitch as `sig` changes
-between edges.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0027/tb.sv 0027/solution.sv && vvp sim
-```
+An `enum` for states makes the waveform readable (`S3` instead of `3'd3`) and lets
+the tool catch illegal assignments.

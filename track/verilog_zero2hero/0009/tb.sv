@@ -1,17 +1,23 @@
 `timescale 1ns/1ps
-module tb;
+module tb #(parameter int W = 8);
     localparam TB_SIM_TIMEOUT = 100000;
-    logic [31:0] in, out, exp;
+    logic [W-1:0] d0, d1, d2, d3, y, exp;
+    logic [1:0] sel;
     int ERR_COUNT = 0;
 
-    byte_reverse DUT (.in(in), .out(out));
+    mux4to1 #(.W(W)) DUT (.d0(d0), .d1(d1), .d2(d2), .d3(d3), .sel(sel), .y(y));
 
     initial begin
-        for (int t = 0; t < 20; t++) begin
-            in = {$random};
+        for (int t = 0; t < 40; t++) begin
+            d0 = $random; d1 = $random; d2 = $random; d3 = $random; sel = $random;
             #5;
-            exp = {in[7:0], in[15:8], in[23:16], in[31:24]};
-            if (out !== exp) begin ERR_COUNT++; $error("%0tns in=%h out=%h expected=%h", $time, in, out, exp); end
+            case (sel)
+                2'd0: exp = d0;
+                2'd1: exp = d1;
+                2'd2: exp = d2;
+                default: exp = d3;
+            endcase
+            if (y !== exp) begin ERR_COUNT++; $error("%0tns sel=%0d y=%h exp=%h", $time, sel, y, exp); end
             #5;
         end
         check_result;

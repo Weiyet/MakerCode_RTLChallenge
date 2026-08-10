@@ -1,21 +1,19 @@
 `timescale 1ns/1ps
 module tb;
     localparam TB_SIM_TIMEOUT = 100000;
-    logic a, b, sel, y;
-    logic exp;
+    logic [7:0] in;
+    logic all_ones, any_one, parity;
     int ERR_COUNT = 0;
 
-    mux2to1 DUT (.a(a), .b(b), .sel(sel), .y(y));
+    reduction_ops DUT (.in(in), .all_ones(all_ones), .any_one(any_one), .parity(parity));
 
     initial begin
-        for (int i = 0; i < 8; i++) begin
-            {a, b, sel} = i[2:0];
+        for (int i = 0; i < 30; i++) begin
+            in = $random;
             #5;
-            exp = sel ? b : a;
-            if (y !== exp) begin
-                ERR_COUNT++;
-                $error("%0tns a=%b b=%b sel=%b y=%b expected=%b", $time, a, b, sel, y, exp);
-            end else $display("%0tns a=%b b=%b sel=%b y=%b", $time, a, b, sel, y);
+            if (all_ones !== (&in)) begin ERR_COUNT++; $error("%0tns all_ones in=%b got=%b", $time, in, all_ones); end
+            if (any_one  !== (|in)) begin ERR_COUNT++; $error("%0tns any_one in=%b got=%b",  $time, in, any_one);  end
+            if (parity   !== (^in)) begin ERR_COUNT++; $error("%0tns parity in=%b got=%b",   $time, in, parity);   end
             #5;
         end
         check_result;

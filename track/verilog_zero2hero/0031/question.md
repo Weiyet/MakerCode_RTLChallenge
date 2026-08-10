@@ -1,4 +1,4 @@
-# UART transmitter (hero)
+# Finite state machine (UART transmitter, hero)
 
 **Difficulty:** ⭐⭐⭐⭐⭐ · **Topics:** FSM + datapath, serialization, timing
 
@@ -61,11 +61,3 @@ stateDiagram-v2
 The provided `tb.sv` acts as a **UART receiver**: it waits for the start bit,
 samples each bit at mid-period (every `CLKS_PER_BIT` clocks), reconstructs the
 byte, and checks it matches what was sent — plus valid start/stop framing.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0031/tb.sv 0031/solution.sv && vvp sim
-```
-
-Congratulations — finishing this means you have used essentially every core
-building block in the track together in one design.

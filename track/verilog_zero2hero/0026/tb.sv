@@ -1,30 +1,29 @@
 `timescale 1ns/1ps
 module tb;
     localparam TB_SIM_TIMEOUT = 100000;
-    logic clk, rst_n, en;
-    logic [7:0] q, exp;
-    logic fb;
+    logic clk, rst_n, sig, rise, fall;
+    logic prev_e, rise_e, fall_e;
     int ERR_COUNT = 0;
 
-    lfsr8 DUT (.clk(clk), .rst_n(rst_n), .en(en), .q(q));
+    edge_detector DUT (.clk(clk), .rst_n(rst_n), .sig(sig), .rise(rise), .fall(fall));
 
     initial begin clk = 0; forever #5 clk = ~clk; end
 
-    assign fb = exp[7] ^ exp[5] ^ exp[4] ^ exp[3];
     always_ff @(posedge clk or negedge rst_n)
-        if (!rst_n) exp <= 8'hFF;
-        else if (en) exp <= {exp[6:0], fb};
+        if (!rst_n) begin prev_e <= 0; rise_e <= 0; fall_e <= 0; end
+        else begin prev_e <= sig; rise_e <= sig & ~prev_e; fall_e <= ~sig & prev_e; end
 
     always @(posedge clk) begin
         #1;
-        if (q !== exp) begin ERR_COUNT++; $error("%0tns q=%h exp=%h", $time, q, exp); end
+        if (rise !== rise_e) begin ERR_COUNT++; $error("%0tns rise=%b exp=%b", $time, rise, rise_e); end
+        if (fall !== fall_e) begin ERR_COUNT++; $error("%0tns fall=%b exp=%b", $time, fall, fall_e); end
     end
 
     initial begin
-        rst_n = 0; en = 0;
+        rst_n = 0; sig = 0;
         repeat(3) @(negedge clk);
         rst_n = 1;
-        for (int i = 0; i < 80; i++) begin en = $random; @(negedge clk); end
+        for (int i = 0; i < 60; i++) begin sig = $random; @(negedge clk); end
         repeat(2) @(posedge clk);
         check_result;
     end

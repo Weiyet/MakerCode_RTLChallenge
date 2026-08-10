@@ -1,22 +1,20 @@
 `timescale 1ns/1ps
 module tb;
     localparam TB_SIM_TIMEOUT = 100000;
-    logic [3:0] in;
-    logic [1:0] pos, exp_pos;
-    logic valid, exp_valid;
+    logic [3:0]  opcode;
+    logic [2:0]  src, dst;
+    logic [5:0]  imm;
+    logic [15:0] word, exp;
     int ERR_COUNT = 0;
 
-    priority_encoder DUT (.in(in), .pos(pos), .valid(valid));
+    ctrl_pack DUT (.opcode(opcode), .src(src), .dst(dst), .imm(imm), .word(word));
 
     initial begin
-        for (int i = 0; i < 16; i++) begin
-            in = i[3:0];
+        for (int t = 0; t < 40; t++) begin
+            opcode = $random; src = $random; dst = $random; imm = $random;
             #5;
-            exp_valid = |in;
-            exp_pos = 2'd0;
-            for (int k = 0; k < 4; k++) if (in[k]) exp_pos = k[1:0];
-            if (valid !== exp_valid) begin ERR_COUNT++; $error("%0tns in=%b valid=%b exp=%b", $time, in, valid, exp_valid); end
-            if (exp_valid && pos !== exp_pos) begin ERR_COUNT++; $error("%0tns in=%b pos=%0d exp=%0d", $time, in, pos, exp_pos); end
+            exp = {opcode, src, dst, imm};
+            if (word !== exp) begin ERR_COUNT++; $error("%0tns word=%h exp=%h", $time, word, exp); end
             #5;
         end
         check_result;

@@ -1,20 +1,24 @@
 `timescale 1ns/1ps
 module tb;
     localparam TB_SIM_TIMEOUT = 100000;
-    logic zero;
-    logic one;
+    logic a, b, y_not, y_and, y_or, y_xor, y_nand, y_nor, y_xnor;
     int ERR_COUNT = 0;
-
-    constants DUT (.zero(zero), .one(one));
-
+    gates DUT (.a(a), .b(b), .y_not(y_not), .y_and(y_and), .y_or(y_or),
+               .y_xor(y_xor), .y_nand(y_nand), .y_nor(y_nor), .y_xnor(y_xnor));
     initial begin
-        #5;
-        if (zero !== 1'b0) begin ERR_COUNT++; $error("%0tns zero=%b expected 0", $time, zero); end
-        if (one  !== 1'b1) begin ERR_COUNT++; $error("%0tns one=%b expected 1",  $time, one);  end
-        if (ERR_COUNT == 0) $display("%0tns zero=%b one=%b", $time, zero, one);
+        for (int i = 0; i < 4; i++) begin
+            {a, b} = i[1:0]; #5;
+            if (y_not  !== ~a)      begin ERR_COUNT++; $error("not");  end
+            if (y_and  !== (a&b))   begin ERR_COUNT++; $error("and");  end
+            if (y_or   !== (a|b))   begin ERR_COUNT++; $error("or");   end
+            if (y_xor  !== (a^b))   begin ERR_COUNT++; $error("xor");  end
+            if (y_nand !== ~(a&b))  begin ERR_COUNT++; $error("nand"); end
+            if (y_nor  !== ~(a|b))  begin ERR_COUNT++; $error("nor");  end
+            if (y_xnor !== ~(a^b))  begin ERR_COUNT++; $error("xnor"); end
+            #5;
+        end
         check_result;
     end
-
     task check_result;
     begin
         if (ERR_COUNT > 0) $display("Test failed with %0d errors.", ERR_COUNT);
@@ -22,7 +26,6 @@ module tb;
         $finish;
     end
     endtask
-
     string filename;
     initial begin
         if ($value$plusargs("VCDFILE=%s", filename)) begin

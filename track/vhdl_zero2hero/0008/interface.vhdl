@@ -1,14 +1,20 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity vector_reverse is
-  port (
-    d : in  std_logic_vector(7 downto 0);
-    y : out std_logic_vector(7 downto 0)
+entity ripple_adder is
+  generic (
+    WIDTH : integer := 4
   );
-end entity vector_reverse;
+  port (
+    a    : in  std_logic_vector(WIDTH-1 downto 0);
+    b    : in  std_logic_vector(WIDTH-1 downto 0);
+    cin  : in  std_logic;
+    sum  : out std_logic_vector(WIDTH-1 downto 0);
+    cout : out std_logic
+  );
+end entity ripple_adder;
 
-architecture rtl of vector_reverse is
+architecture rtl of ripple_adder is
 begin
   -- your implementation here
 

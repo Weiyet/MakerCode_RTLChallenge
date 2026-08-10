@@ -1,17 +1,22 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-entity half_adder is
+entity decoder2to4 is
   port (
-    a    : in  std_logic;
-    b    : in  std_logic;
-    sum  : out std_logic;
-    cout : out std_logic
+    code : in  std_logic_vector(1 downto 0);
+    en   : in  std_logic;
+    y    : out std_logic_vector(3 downto 0)
   );
-end entity half_adder;
+end entity decoder2to4;
 
-architecture rtl of half_adder is
+architecture rtl of decoder2to4 is
 begin
-  sum  <= a xor b;
-  cout <= a and b;
+  process(all)
+  begin
+    y <= (others => '0');
+    if en = '1' then
+      y(to_integer(unsigned(code))) <= '1';
+    end if;
+  end process;
 end architecture rtl;

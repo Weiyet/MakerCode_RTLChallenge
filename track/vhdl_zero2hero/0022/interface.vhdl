@@ -1,17 +1,19 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity dff_reset is
-  port (
-    clk     : in  std_logic;
-    rst_n   : in  std_logic;
-    d       : in  std_logic;
-    q_sync  : out std_logic;
-    q_async : out std_logic
+entity shift_register is
+  generic (
+    W : integer := 8
   );
-end entity dff_reset;
+  port (
+    clk   : in  std_logic;
+    rst_n : in  std_logic;
+    sin   : in  std_logic;
+    q     : out std_logic_vector(W-1 downto 0)
+  );
+end entity shift_register;
 
-architecture rtl of dff_reset is
+architecture rtl of shift_register is
 begin
   -- your implementation here
 

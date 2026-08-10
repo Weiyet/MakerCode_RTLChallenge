@@ -1,54 +1,40 @@
-# Reset styles: synchronous vs asynchronous
+# Sequential logic (shift register)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** reset, sensitivity lists
+**Difficulty:** ⭐⭐ · **Topics:** shifting, `&`
 
 ## Background
-Registers need a defined start value from **reset**. Two styles differ in *when*
-reset acts:
-- **Synchronous**: reset only checked at a clock edge; process is sensitive to
-  `clk` only.
-- **Asynchronous**: reset acts immediately; process is sensitive to `clk` **and**
-  `rst_n`, and the reset is tested *before* `rising_edge`.
-
-`rst_n` is active-low (`_n`): reset when 0.
+A **shift register** moves its bits along each clock. Serial-in parallel-out
+collects a serial stream into a word — the receiver half of a serial link. Each
+clock: `q <= q(W-2 downto 0) & sin` drops the MSB, shifts up, and inserts `sin` at
+the LSB.
 
 ## The task
-Produce `q_sync` (sync reset) and `q_async` (async reset) copies of `d`.
+Shift left, inserting `sin` at the LSB; async active-low reset clears `q`.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `clk`, `rst_n` | in | std_logic | clock / active-low reset |
-| `d`       | in  | std_logic | data |
-| `q_sync`  | out | std_logic | sync-reset register |
-| `q_async` | out | std_logic | async-reset register |
+| `clk`, `rst_n` | in | std_logic | clock / async reset |
+| `sin` | in  | std_logic | serial input |
+| `q`   | out | std_logic_vector(W-1 downto 0) | parallel output |
+
+**Generic:** `W` (default 8)
 
 ## How to approach it
 ```vhdl
-process(clk)                       -- synchronous
+process(clk, rst_n)
 begin
-    if rising_edge(clk) then
-        if rst_n = '0' then q_sync <= '0'; else q_sync <= d; end if;
+    if rst_n = '0' then
+        q_i <= (others => '0');
+    elsif rising_edge(clk) then
+        q_i <= q_i(W-2 downto 0) & sin;
     end if;
 end process;
-
-process(clk, rst_n)                -- asynchronous
-begin
-    if rst_n = '0' then q_async <= '0';
-    elsif rising_edge(clk) then q_async <= d;
-    end if;
-end process;
+q <= q_i;
 ```
+(An internal `q_i` is used because an `out` port cannot be read back.)
 
 ## Common mistakes
-- Wrong sensitivity list for the chosen style.
-- Testing `rising_edge` *before* the async reset — the reset check must come first.
-
-## VHDL notes
-Choose one reset style per project. The two pure forms here isolate the essential
-difference.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0022/solution.vhdl 0022/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+- Reading the `out` port `q` directly — keep an internal signal and drive `q` from
+  it.
+- Shifting the wrong direction.

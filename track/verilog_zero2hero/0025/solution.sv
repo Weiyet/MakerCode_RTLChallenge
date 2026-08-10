@@ -1,16 +1,16 @@
-module updown_counter #(
-    parameter int W = 8
-) (
-    input  logic         clk,
-    input  logic         rst_n,
-    input  logic         load,
-    input  logic [W-1:0] load_val,
-    input  logic         en,
-    input  logic         up_down,
-    output logic [W-1:0] count
+module ram #(
+    parameter int AW = 4,
+    parameter int DW = 8
+)(
+    input  logic          clk,
+    input  logic          we,
+    input  logic [AW-1:0] addr,
+    input  logic [DW-1:0] wdata,
+    output logic [DW-1:0] rdata
 );
-    always_ff @(posedge clk or negedge rst_n)
-        if (!rst_n)    count <= '0;
-        else if (load) count <= load_val;
-        else if (en)   count <= up_down ? count + 1'b1 : count - 1'b1;
+    logic [DW-1:0] mem [0:(1<<AW)-1];
+    always_ff @(posedge clk) begin
+        if (we) mem[addr] <= wdata;
+        rdata <= mem[addr];
+    end
 endmodule

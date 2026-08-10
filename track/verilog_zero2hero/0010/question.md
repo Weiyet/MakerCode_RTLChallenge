@@ -1,44 +1,46 @@
-# Half adder
+# Combinational logic (2-to-4 decoder)
 
-**Difficulty:** ⭐ · **Topics:** XOR/AND, arithmetic from gates
+**Difficulty:** ⭐⭐ · **Topics:** decoders, one-hot, enable
 
 ## Background
-Addition is built from gates. Adding two single bits gives a result that can be
-0, 1, or 2 — which needs **two** output bits: a `sum` (the low bit) and a `cout`
-(carry, the high bit). Looking at the truth table, `sum` is 1 exactly when the
-inputs differ (that is XOR) and `cout` is 1 only when both are 1 (that is AND).
-This two-gate cell is the **half adder**.
+A **decoder** is the opposite of an encoder: it turns an N-bit binary code into a
+**one-hot** output where exactly one of `2^N` lines is high. Decoders select rows
+in memories, enable one of several blocks, etc. An **enable** input gates the
+whole thing — when it is low, no output is asserted.
 
 ## The task
-`sum = a XOR b`, `cout = a AND b`.
+When `en=1`, assert the single `out` bit chosen by `in`; when `en=0`, all outputs
+are 0.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `a`, `b` | input  | 1 | operands |
-| `sum`    | output | 1 | `a ^ b` |
-| `cout`   | output | 1 | `a & b` |
+| `in`  | input  | 2 | binary code |
+| `en`  | input  | 1 | enable |
+| `out` | output | 4 | one-hot (or all-zero) |
 
-## Truth table
-| a | b | cout | sum |
-|---|---|------|-----|
-| 0 | 0 | 0 | 0 |
-| 0 | 1 | 0 | 1 |
-| 1 | 0 | 0 | 1 |
-| 1 | 1 | 1 | 0 |
+## Truth table (en=1)
+| in | out |
+|----|-----|
+| 00 | 0001 |
+| 01 | 0010 |
+| 10 | 0100 |
+| 11 | 1000 |
 
 ## How to approach it
+Clear all outputs, then set the selected bit only when enabled:
 ```systemverilog
-assign sum  = a ^ b;
-assign cout = a & b;
+always_comb begin
+    out = 4'b0000;
+    if (en) out[in] = 1'b1;
+end
 ```
+Indexing `out[in]` with a signal is a neat way to write the shift `1 << in`.
 
 ## Common mistakes
-- Swapping `sum` and `cout`.
-- It is called "half" because it has no carry-*in* — that is the full adder
-  (next problem).
+- Not clearing `out` first — every path must define `out` or you get a latch.
+- Forgetting to gate on `en`.
 
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0010/tb.sv 0010/solution.sv && vvp sim
-```
+## SystemVerilog notes
+`out[in] = 1'b1` uses a variable index — synthesizable and equivalent to
+`out = en ? (4'b1 << in) : '0;`. Both are fine; pick whichever reads clearer.

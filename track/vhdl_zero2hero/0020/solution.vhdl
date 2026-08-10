@@ -1,34 +1,27 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity gray_codec is
+entity enable_register is
   generic (
-    W : integer := 4
+    W : integer := 8
   );
   port (
-    bin     : in  std_logic_vector(W-1 downto 0);
-    gray_in : in  std_logic_vector(W-1 downto 0);
-    gray    : out std_logic_vector(W-1 downto 0);
-    bin_out : out std_logic_vector(W-1 downto 0)
+    clk   : in  std_logic;
+    rst_n : in  std_logic;
+    en    : in  std_logic;
+    d     : in  std_logic_vector(W-1 downto 0);
+    q     : out std_logic_vector(W-1 downto 0)
   );
-end entity gray_codec;
+end entity enable_register;
 
-architecture rtl of gray_codec is
-  function bin2gray(b : std_logic_vector) return std_logic_vector is
-  begin
-    return b xor ('0' & b(b'high downto 1));
-  end function;
-
-  function gray2bin(g : std_logic_vector) return std_logic_vector is
-    variable b : std_logic_vector(g'range);
-  begin
-    b(b'high) := g(g'high);
-    for i in g'high-1 downto 0 loop
-      b(i) := b(i+1) xor g(i);
-    end loop;
-    return b;
-  end function;
+architecture rtl of enable_register is
 begin
-  gray    <= bin2gray(bin);
-  bin_out <= gray2bin(gray_in);
+  process(clk, rst_n)
+  begin
+    if rst_n = '0' then
+      q <= (others => '0');
+    elsif rising_edge(clk) then
+      if en = '1' then q <= d; end if;
+    end if;
+  end process;
 end architecture rtl;

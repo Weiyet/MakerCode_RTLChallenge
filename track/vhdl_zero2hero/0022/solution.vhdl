@@ -1,31 +1,28 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity dff_reset is
-  port (
-    clk     : in  std_logic;
-    rst_n   : in  std_logic;
-    d       : in  std_logic;
-    q_sync  : out std_logic;
-    q_async : out std_logic
+entity shift_register is
+  generic (
+    W : integer := 8
   );
-end entity dff_reset;
+  port (
+    clk   : in  std_logic;
+    rst_n : in  std_logic;
+    sin   : in  std_logic;
+    q     : out std_logic_vector(W-1 downto 0)
+  );
+end entity shift_register;
 
-architecture rtl of dff_reset is
+architecture rtl of shift_register is
+  signal q_i : std_logic_vector(W-1 downto 0);
 begin
-  process(clk)
-  begin
-    if rising_edge(clk) then
-      if rst_n = '0' then q_sync <= '0'; else q_sync <= d; end if;
-    end if;
-  end process;
-
   process(clk, rst_n)
   begin
     if rst_n = '0' then
-      q_async <= '0';
+      q_i <= (others => '0');
     elsif rising_edge(clk) then
-      q_async <= d;
+      q_i <= q_i(W-2 downto 0) & sin;
     end if;
   end process;
+  q <= q_i;
 end architecture rtl;

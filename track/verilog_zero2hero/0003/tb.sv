@@ -1,23 +1,18 @@
 `timescale 1ns/1ps
 module tb;
     localparam TB_SIM_TIMEOUT = 100000;
-    logic a, b;
-    logic y_and, y_or, y_xor, y_nand, y_nor, y_xnor;
+    logic [15:0] in;
+    logic [7:0]  hi, lo;
     int ERR_COUNT = 0;
 
-    logic_gates DUT (.a(a), .b(b), .y_and(y_and), .y_or(y_or), .y_xor(y_xor),
-                     .y_nand(y_nand), .y_nor(y_nor), .y_xnor(y_xnor));
+    vector_split DUT (.in(in), .hi(hi), .lo(lo));
 
     initial begin
-        for (int i = 0; i < 4; i++) begin
-            {a, b} = i[1:0];
+        for (int i = 0; i < 20; i++) begin
+            in = $random;
             #5;
-            if (y_and  !== (a & b))  begin ERR_COUNT++; $error("%0tns AND  a=%b b=%b got=%b", $time, a, b, y_and);  end
-            if (y_or   !== (a | b))  begin ERR_COUNT++; $error("%0tns OR   a=%b b=%b got=%b", $time, a, b, y_or);   end
-            if (y_xor  !== (a ^ b))  begin ERR_COUNT++; $error("%0tns XOR  a=%b b=%b got=%b", $time, a, b, y_xor);  end
-            if (y_nand !== ~(a & b)) begin ERR_COUNT++; $error("%0tns NAND a=%b b=%b got=%b", $time, a, b, y_nand); end
-            if (y_nor  !== ~(a | b)) begin ERR_COUNT++; $error("%0tns NOR  a=%b b=%b got=%b", $time, a, b, y_nor);  end
-            if (y_xnor !== ~(a ^ b)) begin ERR_COUNT++; $error("%0tns XNOR a=%b b=%b got=%b", $time, a, b, y_xnor); end
+            if (hi !== in[15:8]) begin ERR_COUNT++; $error("%0tns hi=%h expected=%h", $time, hi, in[15:8]); end
+            if (lo !== in[7:0])  begin ERR_COUNT++; $error("%0tns lo=%h expected=%h", $time, lo, in[7:0]);  end
             #5;
         end
         check_result;

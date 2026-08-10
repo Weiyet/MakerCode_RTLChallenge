@@ -2,39 +2,24 @@ library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 
-entity debouncer is
-  generic (
-    STABLE : integer := 4
-  );
-  port (
-    clk   : in  std_logic;
-    rst_n : in  std_logic;
-    noisy : in  std_logic;
-    clean : out std_logic
-  );
-end entity debouncer;
+entity seq_src is
+  port (clk   : in  std_logic;
+        rst_n : in  std_logic;
+        ready : in  std_logic;
+        valid : out std_logic;
+        data  : out std_logic_vector(7 downto 0));
+end entity seq_src;
 
-architecture rtl of debouncer is
-  signal clean_i : std_logic;
-  signal cnt     : integer range 0 to STABLE;
+architecture rtl of seq_src is
+  signal cnt : unsigned(7 downto 0) := (others => '0');
 begin
-  process(clk, rst_n)
-  begin
+  valid <= '1';
+  process(clk, rst_n) begin
     if rst_n = '0' then
-      clean_i <= '0';
-      cnt     <= 0;
+      cnt <= (others => '0');
     elsif rising_edge(clk) then
-      if noisy /= clean_i then
-        if cnt = STABLE-1 then
-          clean_i <= noisy;
-          cnt     <= 0;
-        else
-          cnt <= cnt + 1;
-        end if;
-      else
-        cnt <= 0;
-      end if;
+      if ready = '1' then cnt <= cnt + 1; end if;
     end if;
   end process;
-  clean <= clean_i;
+  data <= std_logic_vector(cnt);
 end architecture rtl;

@@ -4,24 +4,32 @@ use ieee.numeric_std.all;
 use std.env.all;
 
 entity tb is
+  generic (W : integer := 8);
 end entity tb;
-
 architecture sim of tb is
-  signal d, y : std_logic_vector(31 downto 0) := (others => '0');
+  signal d0, d1, d2, d3, y : std_logic_vector(W-1 downto 0) := (others => '0');
+  signal sel : std_logic_vector(1 downto 0) := "00";
 begin
-  dut : entity work.byte_reverse port map (d => d, y => y);
-
+  dut : entity work.mux4to1 generic map (W => W)
+        port map (d0 => d0, d1 => d1, d2 => d2, d3 => d3, sel => sel, y => y);
   process
     variable errc : integer := 0;
-    variable v    : unsigned(31 downto 0) := (others => '0');
-    variable exp  : std_logic_vector(31 downto 0);
+    variable exp  : std_logic_vector(W-1 downto 0);
   begin
-    for i in 0 to 40 loop
-      d <= std_logic_vector(v);
+    for t in 0 to 39 loop
+      d0 <= std_logic_vector(to_unsigned((t*7)  mod 256, W));
+      d1 <= std_logic_vector(to_unsigned((t*13) mod 256, W));
+      d2 <= std_logic_vector(to_unsigned((t*29) mod 256, W));
+      d3 <= std_logic_vector(to_unsigned((t*53) mod 256, W));
+      sel <= std_logic_vector(to_unsigned(t mod 4, 2));
       wait for 5 ns;
-      exp := d(7 downto 0) & d(15 downto 8) & d(23 downto 16) & d(31 downto 24);
-      if y /= exp then errc := errc + 1; report "byte reverse wrong" severity error; end if;
-      v := v + to_unsigned(16#1010101#, 32);
+      case sel is
+        when "00" => exp := d0;
+        when "01" => exp := d1;
+        when "10" => exp := d2;
+        when others => exp := d3;
+      end case;
+      if y /= exp then errc := errc + 1; report "mux wrong" severity error; end if;
     end loop;
     if errc = 0 then report "Test PASS" severity note; else report "Test FAILED" severity note; end if;
     finish;

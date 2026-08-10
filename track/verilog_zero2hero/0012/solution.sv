@@ -1,22 +1,16 @@
-module ripple_adder #(
-    parameter int WIDTH = 4
-) (
-    input  logic [WIDTH-1:0] a,
-    input  logic [WIDTH-1:0] b,
-    input  logic             cin,
-    output logic [WIDTH-1:0] sum,
-    output logic             cout
+module sel_mux (
+    input  logic [1:0] sel,
+    input  logic [7:0] a,
+    input  logic [7:0] b,
+    input  logic [7:0] c,
+    output logic [7:0] y
 );
-    logic [WIDTH:0] carry;
-    assign carry[0] = cin;
-
-    genvar i;
-    generate
-        for (i = 0; i < WIDTH; i++) begin : gen_fa
-            assign sum[i]      = a[i] ^ b[i] ^ carry[i];
-            assign carry[i+1]  = (a[i] & b[i]) | (a[i] & carry[i]) | (b[i] & carry[i]);
-        end
-    endgenerate
-
-    assign cout = carry[WIDTH];
+    always_comb begin
+        y = '0;
+        case (sel)
+            2'd0: y = a;
+            2'd1: y = b;
+            2'd2: y = c;
+        endcase
+    end
 endmodule

@@ -1,12 +1,15 @@
-module popcount #(
-    parameter int WIDTH = 8
-) (
-    input  logic [WIDTH-1:0]            in,
-    output logic [$clog2(WIDTH+1)-1:0]  count
+module dff_reset (
+    input  logic clk,
+    input  logic rst_n,
+    input  logic d,
+    output logic q_sync,
+    output logic q_async
 );
-    always_comb begin
-        count = '0;
-        for (int i = 0; i < WIDTH; i++)
-            count += in[i];
-    end
+    always_ff @(posedge clk)
+        if (!rst_n) q_sync <= 1'b0;
+        else        q_sync <= d;
+
+    always_ff @(posedge clk or negedge rst_n)
+        if (!rst_n) q_async <= 1'b0;
+        else        q_async <= d;
 endmodule

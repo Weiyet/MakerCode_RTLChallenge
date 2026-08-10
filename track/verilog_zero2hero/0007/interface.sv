@@ -1,9 +1,11 @@
-module concat_replicate (
-    input  logic [7:0]  a,
-    input  logic [7:0]  b,
-    output logic [15:0] cat,
-    output logic [31:0] rep4,
-    output logic [7:0]  nib_swap
+module adders (
+    input  logic a,
+    input  logic b,
+    input  logic cin,
+    output logic h_sum,
+    output logic h_cout,
+    output logic sum,
+    output logic cout
 );
     // your implementation here
 

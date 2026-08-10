@@ -1,51 +1,58 @@
-# 2-to-4 Decoder (with enable)
+# SystemVerilog types (enum & ALU)
 
-**Difficulty:** ⭐⭐ · **Topics:** decoders, one-hot, enable
+**Difficulty:** ⭐⭐⭐ · **Topics:** `enum`, `case`, `always_comb`, status flags
 
 ## Background
-A **decoder** is the opposite of an encoder: it turns an N-bit binary code into a
-**one-hot** output where exactly one of `2^N` lines is high. Decoders select rows
-in memories, enable one of several blocks, etc. An **enable** input gates the
-whole thing — when it is low, no output is asserted.
+An **ALU** performs one of several operations chosen by an opcode. Using raw
+numbers (`3'd5`) for opcodes is error-prone; an **`enum`** gives each a readable
+name and lets the tool width-check them. ALUs also produce **status flags** — here
+`zero`, high when the result is all-zero — which control flow later depends on.
 
 ## The task
-When `en=1`, assert the single `out` bit chosen by `in`; when `en=0`, all outputs
-are 0.
+8-bit ALU driven by `op`, with a `zero` flag.
+
+| op | name | y |
+|----|------|---|
+| 0 | ADD | a + b |
+| 1 | SUB | a - b |
+| 2 | AND | a & b |
+| 3 | OR  | a \| b |
+| 4 | XOR | a ^ b |
+| 5 | SLL | a << b[2:0] |
+| 6 | SRL | a >> b[2:0] |
+| 7 | SLT | (a < b) ? 1 : 0 (unsigned) |
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `in`  | input  | 2 | binary code |
-| `en`  | input  | 1 | enable |
-| `out` | output | 4 | one-hot (or all-zero) |
+| `a`, `b` | input  | W | operands |
+| `op`     | input  | 3 | opcode |
+| `y`      | output | W | result |
+| `zero`   | output | 1 | result == 0 |
 
-## Truth table (en=1)
-| in | out |
-|----|-----|
-| 00 | 0001 |
-| 01 | 0010 |
-| 10 | 0100 |
-| 11 | 1000 |
+**Parameter:** `W` (default 8)
 
 ## How to approach it
-Clear all outputs, then set the selected bit only when enabled:
+Name the opcodes, then `case` on them inside `always_comb`, and derive `zero`
+from the result:
 ```systemverilog
+typedef enum logic [2:0] {OP_ADD, OP_SUB, OP_AND, OP_OR, OP_XOR, OP_SLL, OP_SRL, OP_SLT} op_e;
 always_comb begin
-    out = 4'b0000;
-    if (en) out[in] = 1'b1;
+    case (op)               // enum names are usable as case labels
+        OP_ADD: y = a + b;
+        // ...
+        default: y = '0;
+    endcase
+    zero = (y == '0);
 end
 ```
-Indexing `out[in]` with a signal is a neat way to write the shift `1 << in`.
 
 ## Common mistakes
-- Not clearing `out` first — every path must define `out` or you get a latch.
-- Forgetting to gate on `en`.
+- Leaving an opcode unhandled (add a `default`).
+- Shift amount width: use `b[2:0]` so shifting an 8-bit value is well-defined.
+- Note some tools reject casting a plain vector to the enum type in the `case`
+  expression, so this design cases on `op` directly with the enum names as labels.
 
 ## SystemVerilog notes
-`out[in] = 1'b1` uses a variable index — synthesizable and equivalent to
-`out = en ? (4'b1 << in) : '0;`. Both are fine; pick whichever reads clearer.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0014/tb.sv 0014/solution.sv && vvp sim
-```
+`typedef enum logic [2:0] {...}` fixes the underlying width, so the names are just
+readable constants — the waveform shows `OP_SUB` instead of `3'd1`.

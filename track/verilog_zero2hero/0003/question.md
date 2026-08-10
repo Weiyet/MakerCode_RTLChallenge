@@ -1,54 +1,45 @@
-# Basic logic gates
+# Vectors (part-select & slicing)
 
-**Difficulty:** ⭐ · **Topics:** bitwise operators, multiple outputs
+**Difficulty:** ⭐ · **Topics:** vectors, bit-slicing, `logic [N-1:0]`
 
 ## Background
-Every combinational circuit is built from a handful of primitive gates. Here you
-compute all six at once from the same two inputs. This also shows that a module
-can have **many outputs** — just add more ports and more `assign` lines.
-
-The operators:
-
-| gate | operator | meaning |
-|------|----------|---------|
-| AND  | `a & b`    | 1 only if both are 1 |
-| OR   | `a \| b`   | 1 if either is 1 |
-| XOR  | `a ^ b`    | 1 if the inputs differ |
-| NAND | `~(a & b)` | inverted AND |
-| NOR  | `~(a \| b)`| inverted OR |
-| XNOR | `~(a ^ b)` | 1 if the inputs are equal |
+A **vector** is a bundle of wires treated as one multi-bit signal, declared with
+a range: `logic [15:0] d;` is 16 bits, numbered 15 (MSB) down to 0 (LSB). You can
+grab a contiguous run of bits with a **part-select** `d[hi:lo]`, which yields
+`hi-lo+1` bits. Splitting a wide word into fields is one of the most common
+things you do in RTL (think: an address into tag/index/offset).
 
 ## The task
-Given `a` and `b`, drive the six gate outputs.
+Split a 16-bit word into its upper and lower bytes.
 
 ## Interface
-| Port | Dir | Width | Function |
-|------|-----|-------|----------|
-| `a`, `b`   | input  | 1 | operands |
-| `y_and`    | output | 1 | a AND b |
-| `y_or`     | output | 1 | a OR b |
-| `y_xor`    | output | 1 | a XOR b |
-| `y_nand`   | output | 1 | a NAND b |
-| `y_nor`    | output | 1 | a NOR b |
-| `y_xnor`   | output | 1 | a XNOR b |
+| Port | Dir | Width | Description |
+|------|-----|-------|-------------|
+| `in` | input  | 16 | packed word |
+| `hi` | output | 8  | `in[15:8]` |
+| `lo` | output | 8  | `in[7:0]` |
+
+```mermaid
+graph LR
+    in["in[15:0]"] --> hi["hi = in[15:8]"]
+    in --> lo["lo = in[7:0]"]
+```
 
 ## How to approach it
-One `assign` per output; wrap the inverted forms in parentheses:
 ```systemverilog
-assign y_nand = ~(a & b);
+assign hi = in[15:8];
+assign lo = in[7:0];
 ```
+
+## Worked example
+`in = 16'hABCD` → `hi = 8'hAB`, `lo = 8'hCD`.
 
 ## Common mistakes
-- Precedence: `~a & b` is `(~a) & b`, **not** `~(a & b)`. Always parenthesise the
-  NAND/NOR/XNOR forms.
-- Confusing `^` (XOR) with `~^`/`^~` (XNOR).
+- Reversed range (`in[8:15]`) — the high index must come first for a `[hi:lo]`
+  descending vector.
+- Width mismatch: `hi` is 8 bits, so it must be assigned an 8-bit slice.
 
 ## SystemVerilog notes
-These same operators work on whole vectors lane-by-lane, so `8'hF0 & 8'h0F` is
-`8'h00`. Reduction (a single `&`/`|`/`^` in front of one vector) is different and
-is covered in a later problem.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0003/tb.sv 0003/solution.sv && vvp sim
-```
+For a *variable* start position use the indexed part-select `in[base +: 8]`
+(8 bits starting at `base`, going up) or `in[top -: 8]` (going down). Constant
+`[hi:lo]` is enough here.

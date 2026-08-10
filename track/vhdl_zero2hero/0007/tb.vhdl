@@ -3,30 +3,26 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.env.all;
 
-entity tb is
-end entity tb;
-
+entity tb is end entity tb;
 architecture sim of tb is
-  signal a, b      : std_logic_vector(7 downto 0) := (others => '0');
-  signal cat       : std_logic_vector(15 downto 0);
-  signal rep4      : std_logic_vector(31 downto 0);
-  signal nib_swap  : std_logic_vector(7 downto 0);
+  signal a, b, cin, h_sum, h_cout, sum, cout : std_logic := '0';
 begin
-  dut : entity work.concat_replicate port map (a => a, b => b, cat => cat, rep4 => rep4, nib_swap => nib_swap);
-
+  dut : entity work.adders port map (a => a, b => b, cin => cin,
+    h_sum => h_sum, h_cout => h_cout, sum => sum, cout => cout);
   process
-    variable errc : integer := 0;
-    variable va, vb : unsigned(7 downto 0) := (others => '0');
+    variable v : unsigned(2 downto 0); variable errc : integer := 0;
+    variable hs, hc, s, co : std_logic;
   begin
-    for i in 0 to 40 loop
-      a <= std_logic_vector(va);
-      b <= std_logic_vector(vb);
+    for i in 0 to 7 loop
+      v := to_unsigned(i, 3); a <= v(2); b <= v(1); cin <= v(0);
       wait for 5 ns;
-      if cat      /= (a & b)                       then errc := errc + 1; report "cat wrong"      severity error; end if;
-      if rep4     /= (a & a & a & a)               then errc := errc + 1; report "rep4 wrong"     severity error; end if;
-      if nib_swap /= (a(3 downto 0) & a(7 downto 4)) then errc := errc + 1; report "nib_swap wrong" severity error; end if;
-      va := va + to_unsigned(37, 8);
-      vb := vb + to_unsigned(91, 8);
+      hs := a xor b; hc := a and b;
+      s  := a xor b xor cin; co := (a and b) or (a and cin) or (b and cin);
+      if h_sum  /= hs then errc := errc + 1; report "h_sum"  severity error; end if;
+      if h_cout /= hc then errc := errc + 1; report "h_cout" severity error; end if;
+      if sum    /= s  then errc := errc + 1; report "sum"    severity error; end if;
+      if cout   /= co then errc := errc + 1; report "cout"   severity error; end if;
+      wait for 5 ns;
     end loop;
     if errc = 0 then report "Test PASS" severity note; else report "Test FAILED" severity note; end if;
     finish;

@@ -3,36 +3,24 @@ use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use std.env.all;
 
-entity tb is end entity tb;
+entity tb is
+  generic (WIDTH : integer := 8);
+end entity tb;
 architecture sim of tb is
-  signal bcd : std_logic_vector(3 downto 0) := "0000";
-  signal seg : std_logic_vector(6 downto 0);
-
-  function golden(d : std_logic_vector(3 downto 0)) return std_logic_vector is
-  begin
-    case d is
-      when "0000" => return "0111111";
-      when "0001" => return "0000110";
-      when "0010" => return "1011011";
-      when "0011" => return "1001111";
-      when "0100" => return "1100110";
-      when "0101" => return "1101101";
-      when "0110" => return "1111101";
-      when "0111" => return "0000111";
-      when "1000" => return "1111111";
-      when "1001" => return "1101111";
-      when others => return "0000000";
-    end case;
-  end function;
+  signal d     : std_logic_vector(WIDTH-1 downto 0) := (others => '0');
+  signal count : std_logic_vector(3 downto 0);
 begin
-  dut : entity work.bcd_to_7seg port map (bcd => bcd, seg => seg);
+  dut : entity work.popcount generic map (WIDTH => WIDTH) port map (d => d, count => count);
   process
     variable errc : integer := 0;
+    variable c    : integer;
   begin
-    for i in 0 to 15 loop
-      bcd <= std_logic_vector(to_unsigned(i, 4));
-      wait for 5 ns;
-      if seg /= golden(bcd) then errc := errc + 1; report "seg wrong" severity error; end if;
+    for i in 0 to (2**WIDTH)-1 loop
+      d <= std_logic_vector(to_unsigned(i, WIDTH));
+      wait for 1 ns;
+      c := 0;
+      for k in d'range loop if d(k) = '1' then c := c + 1; end if; end loop;
+      if to_integer(unsigned(count)) /= c then errc := errc + 1; report "count wrong" severity error; end if;
     end loop;
     if errc = 0 then report "Test PASS" severity note; else report "Test FAILED" severity note; end if;
     finish;

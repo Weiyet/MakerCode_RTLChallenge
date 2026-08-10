@@ -1,45 +1,43 @@
-# Population count (parameterized)
+# Sequential logic (reset styles)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** `parameter`, `$clog2`, accumulate in `always_comb`
+**Difficulty:** ⭐⭐⭐ · **Topics:** reset, sensitivity lists
 
 ## Background
-"Popcount" = how many bits are set. The interesting part is **sizing the output**:
-counting `WIDTH` bits gives a value 0..WIDTH, which needs `$clog2(WIDTH+1)` bits.
-`$clog2(n)` is the number of bits to represent values `0..n-1`, so using it keeps
-the port correct as `WIDTH` changes.
+Registers need a known starting value — that is what **reset** provides. There are
+two styles, differing in *when* the reset takes effect:
+- **Synchronous**: reset is only examined on a clock edge. Sensitivity list is
+  just `@(posedge clk)`.
+- **Asynchronous**: reset acts the instant it asserts, no clock needed. The reset
+  appears in the sensitivity list: `@(posedge clk or negedge rst_n)`.
+
+`rst_n` is *active-low* (the trailing `_n`): the circuit is in reset when it is 0.
 
 ## The task
-Return the number of 1s in a `WIDTH`-bit input.
+Produce two registered copies of `d`: `q_sync` (sync reset) and `q_async` (async
+reset).
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `in`    | input  | WIDTH | data |
-| `count` | output | $clog2(WIDTH+1) | number of set bits |
-
-**Parameter:** `WIDTH` (default 8)
+| `clk`, `rst_n` | input | 1 | clock / active-low reset |
+| `d`       | input  | 1 | data |
+| `q_sync`  | output | 1 | sync-reset register |
+| `q_async` | output | 1 | async-reset register |
 
 ## How to approach it
 ```systemverilog
-always_comb begin
-    count = '0;
-    for (int i = 0; i < WIDTH; i++)
-        count += in[i];       // add each bit (0 or 1)
-end
-```
+always_ff @(posedge clk)                      // sync
+    if (!rst_n) q_sync <= 1'b0; else q_sync <= d;
 
-## Worked example
-`WIDTH=8`, `in=8'b1011_0010` → count = 4.
+always_ff @(posedge clk or negedge rst_n)     // async
+    if (!rst_n) q_async <= 1'b0; else q_async <= d;
+```
 
 ## Common mistakes
-- Under-sizing `count` (e.g. `$clog2(WIDTH)` misses the all-ones case = WIDTH).
-- Forgetting to clear `count` before accumulating.
+- Putting the reset in the sensitivity list for a *sync* reset (or leaving it out
+  for an *async* one) — the style is defined by that list.
+- Mixed active levels: `!rst_n` because it is active-low.
 
 ## SystemVerilog notes
-Adding a 1-bit value to `count` promotes it correctly. `$countones(in)` is a
-built-in that does the same in a testbench, but here we build it explicitly.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0019/tb.sv 0019/solution.sv && vvp sim
-```
+Pick one reset style per project. Async-assert / sync-deassert is common in real
+chips, but the two pure styles here show the essential difference.

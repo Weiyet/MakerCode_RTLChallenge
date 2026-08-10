@@ -1,40 +1,32 @@
-# Constants
+# Combinational logic (basic gates incl. NOT)
 
-**Difficulty:** ⭐ · **Topics:** literals, concurrent assignment
+**Difficulty:** ⭐ · **Topics:** logical operators, multiple outputs
 
 ## Background
-An output can be tied to a fixed value — physically a connection to ground (`'0'`)
-or the supply rail (`'1'`). In VHDL a single-bit literal uses **single quotes**
-(`'0'`, `'1'`); multi-bit literals use **double quotes** (`"1010"`). You drive a
-constant onto a port with a concurrent assignment.
+VHDL has the logic operators `not`, `and`, `or`, `xor`, `nand`, `nor`, `xnor`.
+One architecture can drive many outputs, each with its own concurrent assignment.
 
 ## The task
-`zero` is always `'0'`; `one` is always `'1'`.
+Build `gates`: from `a`, `b` drive NOT (of `a`), AND, OR, XOR, NAND, NOR and XNOR.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `zero` | out | std_logic | constant 0 |
-| `one`  | out | std_logic | constant 1 |
+| `a`, `b` | in  | std_logic | operands |
+| `y_not`  | out | std_logic | `not a` |
+| `y_and`, `y_or`, `y_xor` | out | std_logic | and/or/xor |
+| `y_nand`, `y_nor`, `y_xnor` | out | std_logic | negated forms |
 
 ## How to approach it
 ```vhdl
-zero <= '0';
-one  <= '1';
+y_not  <= not a;
+y_and  <= a and b;
+y_or   <= a or  b;
+y_xor  <= a xor b;
+y_nand <= a nand b;
+y_nor  <= a nor  b;
+y_xnor <= a xnor b;
 ```
-
-## Common mistakes
-- Using double quotes for a single bit (`"0"` is a 1-element vector, not a
-  `std_logic`).
 
 ## VHDL notes
-For a wide constant, an **aggregate** fills every bit: `bus <= (others => '0');`
-clears a vector of any width.
-
-## Run it (GHDL)
-```bash
-# from track/vhdl_zero2hero/
-ghdl -a --std=08 0001/solution.vhdl 0001/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
-A correct run prints `Test PASS`. Swap `solution.vhdl` for `interface.vhdl` to test
-your own answer.
+Unlike some languages, `nand`/`nor` are first-class operators in VHDL.

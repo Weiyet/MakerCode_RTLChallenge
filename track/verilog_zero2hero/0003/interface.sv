@@ -1,12 +1,7 @@
-module logic_gates (
-    input  logic a,
-    input  logic b,
-    output logic y_and,
-    output logic y_or,
-    output logic y_xor,
-    output logic y_nand,
-    output logic y_nor,
-    output logic y_xnor
+module vector_split (
+    input  logic [15:0] in,
+    output logic [7:0]  hi,
+    output logic [7:0]  lo
 );
     // your implementation here
 

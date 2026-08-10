@@ -1,58 +1,46 @@
-# Mealy detector "11"
+# Finite state machine (switch debouncer)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** Mealy vs Moore
+**Difficulty:** ⭐⭐⭐⭐ · **Topics:** counter + condition, glitch rejection
 
 ## Background
-A **Mealy** machine's output depends on the state **and** the current input, so it
-can react a cycle earlier than a Moore machine — at the cost of being
-combinational (and able to glitch). Compare this "two 1s in a row" detector with
-the Moore FSM in 0028.
+A mechanical switch bounces for a few milliseconds before settling. A
+**debouncer** accepts a new level only after `noisy` has stayed different from
+`clean` for `STABLE` consecutive clocks; any match restarts the count. It is a
+counter guarding a single output bit.
 
 ## The task
-Assert `y` in the *same* cycle when the current and previous `din` are both 1
-(overlapping).
+Update `clean` only after `STABLE` stable clocks; async active-low reset clears it.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `clk`, `rst_n` | in | std_logic | clock / async reset |
-| `din` | in  | std_logic | serial data |
-| `y`   | out | std_logic | Mealy output (combinational) |
+| `clk`, `rst_n` | in | std_logic | clock / reset |
+| `noisy` | in  | std_logic | raw input |
+| `clean` | out | std_logic | debounced output |
 
-```mermaid
-stateDiagram-v2
-    [*] --> S0
-    S0 --> S1: din=1 / y=0
-    S0 --> S0: din=0 / y=0
-    S1 --> S1: din=1 / y=1
-    S1 --> S0: din=0 / y=0
-```
+**Generic:** `STABLE` (default 4)
 
 ## How to approach it
-One state bit ("was the previous bit a 1?"):
 ```vhdl
-type state_t is (S0, S1);
-signal state : state_t;
-...
 process(clk, rst_n)
 begin
-    if rst_n = '0' then state <= S0;
+    if rst_n = '0' then clean_i <= '0'; cnt <= 0;
     elsif rising_edge(clk) then
-        if din = '1' then state <= S1; else state <= S0; end if;
+        if noisy /= clean_i then
+            if cnt = STABLE-1 then clean_i <= noisy; cnt <= 0;
+            else cnt <= cnt + 1; end if;
+        else
+            cnt <= 0;             -- input matches output -> reset timer
+        end if;
     end if;
 end process;
-y <= '1' when (state = S1 and din = '1') else '0';   -- reacts to din now
+clean <= clean_i;
 ```
 
 ## Common mistakes
-- Registering `y` (that makes it Moore, a cycle late).
-- Dropping the `and din` term (the "current input" half of a Mealy output).
+- Not clearing the counter when input matches output (bounces would accumulate).
+- Off-by-one on the threshold (`STABLE` vs `STABLE-1`).
 
 ## VHDL notes
-Mealy outputs are combinational and can glitch — register them if a downstream
-block needs a clean pulse.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0029/solution.vhdl 0029/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+Real designs size `STABLE` for milliseconds at the true clock rate; a small value
+keeps this exercise quick.

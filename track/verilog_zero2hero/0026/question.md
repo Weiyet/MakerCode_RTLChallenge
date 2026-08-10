@@ -1,44 +1,51 @@
-# LFSR (pseudo-random)
+# Finite state machine (edge detector)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** feedback shift register, XOR taps
+**Difficulty:** ⭐⭐⭐ · **Topics:** registering history, one-cycle pulse
 
 ## Background
-A **Linear-Feedback Shift Register** is a shift register whose serial input is the
-XOR of selected bits (**taps**). With the right taps it cycles through all `2^N-1`
-non-zero states before repeating — a cheap pseudo-random generator used for test
-patterns, scramblers, and CRCs. This 8-bit LFSR uses taps 8,6,5,4
-(polynomial `x^8 + x^6 + x^5 + x^4 + 1`).
+To react to a *change* in a signal (a button press, a flag going high) you compare
+its current value with its value one clock ago. Store the previous value in a
+flip-flop, then a rising edge is "now 1 AND was 0" and a falling edge is "now 0
+AND was 1". The result is a clean **one-cycle pulse** per edge — the standard way
+to turn a level into an event.
 
 ## The task
-`feedback = q[7]^q[5]^q[4]^q[3]`, then shift left inserting `feedback`. Seed to
-`8'hFF` on reset; advance only when `en=1`.
+Register `sig` into `prev`; output registered `rise` and `fall` pulses. Async
+active-low reset.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `clk`, `rst_n` | input | 1 | clock / async reset (seed = FF) |
-| `en`  | input  | 1 | advance enable |
-| `q`   | output | 8 | LFSR state |
+| `clk`, `rst_n` | input | 1 | clock / reset |
+| `sig`  | input  | 1 | monitored signal |
+| `rise` | output | 1 | rising-edge pulse |
+| `fall` | output | 1 | falling-edge pulse |
+
+```wavedrom
+{ "signal": [
+  {"name":"clk","wave":"p......"},
+  {"name":"sig","wave":"0.1..0."},
+  {"name":"rise","wave":"0..10.."},
+  {"name":"fall","wave":"0....10"}
+]}
+```
 
 ## How to approach it
 ```systemverilog
-logic fb;
-assign fb = q[7] ^ q[5] ^ q[4] ^ q[3];
 always_ff @(posedge clk or negedge rst_n)
-    if (!rst_n)  q <= 8'hFF;
-    else if (en) q <= {q[6:0], fb};
+    if (!rst_n) begin prev <= 0; rise <= 0; fall <= 0; end
+    else begin
+        prev <= sig;
+        rise <=  sig & ~prev;
+        fall <= ~sig &  prev;
+    end
 ```
 
 ## Common mistakes
-- Seeding to 0 — an all-zero LFSR is a lock-up state and never moves. Seed to any
-  non-zero value.
-- Wrong tap set — only specific taps give the maximal-length sequence.
+- Comparing `sig` against itself (forgetting the registered `prev`).
+- A wider pulse than one cycle — that means `prev` is not updating each clock.
 
 ## SystemVerilog notes
-`fb = ^(q & 8'b1011_1000)` is an equivalent way to express the same tap XOR using
-a reduction over a masked value.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0026/tb.sv 0026/solution.sv && vvp sim
-```
+Registering the outputs (as here) gives a glitch-free one-cycle pulse. A purely
+combinational `rise = sig & ~prev` also works but can glitch as `sig` changes
+between edges.

@@ -1,31 +1,20 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity ctrl_pack is
+entity dff is
   port (
-    opcode : in  std_logic_vector(3 downto 0);
-    src    : in  std_logic_vector(2 downto 0);
-    dst    : in  std_logic_vector(2 downto 0);
-    imm    : in  std_logic_vector(5 downto 0);
-    word   : out std_logic_vector(15 downto 0)
+    clk : in  std_logic;
+    d   : in  std_logic;
+    q   : out std_logic
   );
-end entity ctrl_pack;
+end entity dff;
 
-architecture rtl of ctrl_pack is
-  type ctrl_t is record
-    opcode : std_logic_vector(3 downto 0);
-    src    : std_logic_vector(2 downto 0);
-    dst    : std_logic_vector(2 downto 0);
-    imm    : std_logic_vector(5 downto 0);
-  end record;
+architecture rtl of dff is
 begin
-  process(all)
-    variable c : ctrl_t;
+  process(clk)
   begin
-    c.opcode := opcode;
-    c.src    := src;
-    c.dst    := dst;
-    c.imm    := imm;
-    word <= c.opcode & c.src & c.dst & c.imm;
+    if rising_edge(clk) then
+      q <= d;
+    end if;
   end process;
 end architecture rtl;

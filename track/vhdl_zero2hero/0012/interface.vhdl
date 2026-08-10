@@ -1,21 +1,14 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity ripple_adder is
-  generic (
-    WIDTH : integer := 4
-  );
-  port (
-    a    : in  std_logic_vector(WIDTH-1 downto 0);
-    b    : in  std_logic_vector(WIDTH-1 downto 0);
-    cin  : in  std_logic;
-    sum  : out std_logic_vector(WIDTH-1 downto 0);
-    cout : out std_logic
-  );
-end entity ripple_adder;
+entity sel_mux is
+  port (sel     : in  std_logic_vector(1 downto 0);
+        a, b, c : in  std_logic_vector(7 downto 0);
+        y       : out std_logic_vector(7 downto 0));
+end entity sel_mux;
 
-architecture rtl of ripple_adder is
+architecture rtl of sel_mux is
 begin
-  -- your implementation here
+  -- combinational process with a default assignment (no inferred latch)
 
 end architecture rtl;

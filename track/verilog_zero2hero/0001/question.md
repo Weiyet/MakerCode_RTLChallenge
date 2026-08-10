@@ -1,44 +1,35 @@
-# Constants
+# Combinational logic (basic gates incl. NOT)
 
-**Difficulty:** ⭐ · **Topics:** literals, constant drivers
+**Difficulty:** ⭐ · **Topics:** bitwise operators, multiple outputs
 
 ## Background
-Sometimes an output must be tied to a fixed value — a `0` or a `1` — regardless
-of any input. In hardware this is just a connection to ground (`0`) or to the
-supply rail (`1`). In SystemVerilog you express a fixed value with a **literal**
-and drive it onto a port with a continuous `assign`.
-
-Literals carry a size and a base: `1'b0` means "1 bit, binary, value 0". The
-number before the apostrophe is the width; the letter after it is the base
-(`b` binary, `d` decimal, `h` hex).
+The bitwise operators are the vocabulary of combinational logic: `~` (NOT),
+`&` (AND), `|` (OR), `^` (XOR), and the negated forms NAND/NOR/XNOR. A single
+module can drive many outputs, each with its own `assign`.
 
 ## The task
-Build `constants` with two outputs: `zero` always `0`, `one` always `1`.
+Build `gates`: from inputs `a`, `b`, drive NOT (of `a`), AND, OR, XOR, NAND, NOR
+and XNOR.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `zero` | output | 1 | always `0` |
-| `one`  | output | 1 | always `1` |
+| `a`, `b` | input  | 1 | operands |
+| `y_not`  | output | 1 | `~a` |
+| `y_and`, `y_or`, `y_xor` | output | 1 | a·b, a+b, a⊕b |
+| `y_nand`, `y_nor`, `y_xnor` | output | 1 | negated forms |
 
 ## How to approach it
-Two continuous assignments, one per output:
 ```systemverilog
-assign zero = 1'b0;
-assign one  = 1'b1;
+assign y_not  = ~a;
+assign y_and  =  a & b;
+assign y_or   =  a | b;
+assign y_xor  =  a ^ b;
+assign y_nand = ~(a & b);
+assign y_nor  = ~(a | b);
+assign y_xnor =  a ~^ b;   // or ~(a ^ b)
 ```
 
 ## Common mistakes
-- Forgetting the width/base and writing `assign one = 1;` — this works (it is an
-  unsized decimal `1`) but sized literals like `1'b1` state your intent clearly.
-- Mixing up which output is which.
-
-## SystemVerilog notes
-For wide constants the unsized fills `'0` and `'1` are handy: `'0` sets *all*
-bits of the target to 0 and `'1` sets all bits to 1, whatever the width. So a
-32-bit clear is simply `assign bus = '0;`.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0001/tb.sv 0001/solution.sv && vvp sim
-```
+- Confusing bitwise `&`/`|` with logical `&&`/`||` (fine here on 1-bit, but they
+  differ on vectors).

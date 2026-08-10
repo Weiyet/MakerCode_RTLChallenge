@@ -1,14 +1,16 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity wire_passthrough is
-  port (
-    a : in  std_logic;
-    y : out std_logic
-  );
-end entity wire_passthrough;
+entity wires_const is
+  port (a    : in  std_logic;
+        y    : out std_logic;
+        one  : out std_logic;
+        zero : out std_logic);
+end entity wires_const;
 
-architecture rtl of wire_passthrough is
+architecture rtl of wires_const is
 begin
-  y <= a;
+  y    <= a;
+  one  <= '1';
+  zero <= '0';
 end architecture rtl;

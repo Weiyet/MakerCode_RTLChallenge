@@ -1,8 +1,7 @@
-module reduction_ops (
-    input  logic [7:0] in,
-    output logic       all_ones,
-    output logic       any_one,
-    output logic       parity
+module reverser (
+    input  logic [31:0] d,
+    output logic [31:0] bitrev,
+    output logic [31:0] byterev
 );
     // your implementation here
 

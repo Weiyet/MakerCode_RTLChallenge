@@ -33,6 +33,8 @@ VVP       ?= vvp
 VHD2VL    ?= vhd2vl
 SANDPIPER ?= sandpiper-saas
 GTKWAVE   ?= gtkwave
+GHDL      ?= ghdl
+GHDL_STD  ?= 08
 
 QUESTION  ?= 0
 LANGUAGE  ?= SV
@@ -54,7 +56,7 @@ QDIR := $(QDIR_ROOT)/$(QID)
 help:
 	@echo "RTL Question Bank - local simulation runner"
 	@echo ""
-	@echo "  make sim  QUESTION=<n> [LANGUAGE=SV|VERILOG|VHDL|TLV] [DUT=<file>]"
+	@echo "  make sim  QUESTION=<n> [LANGUAGE=SV|VERILOG|VHDL|GHDL|TLV] [DUT=<file>]"
 	@echo "  make wave QUESTION=<n> [TEST=<k>]   # open <QID>/test_<k>.vcd (default 1)"
 	@echo "  make clean"
 	@echo ""
@@ -64,6 +66,27 @@ help:
 sim:
 	@if [ ! -d "$(QDIR)" ]; then echo "Question $(QID) not found (looked for ./$(QDIR)/)"; exit 1; fi
 	lang=$$(echo "$(LANGUAGE)" | tr '[:lower:]' '[:upper:]')
+
+	# ---- native VHDL via GHDL (tb.vhdl) -------------------------------------
+	# For tracks that ship real VHDL-2008 testbenches (LANGUAGE=GHDL). This path
+	# is self-contained and does not touch the iverilog flow below.
+	if [ "$$lang" = "GHDL" ] || [ "$$lang" = "NVHDL" ]; then
+	  src="$(DUT)"; [ -z "$$src" ] && src="interface.vhdl"
+	  case "$$src" in /*) ;; *) src="$(QDIR)/$$src" ;; esac
+	  if [ ! -f "$$src" ]; then echo "DUT source not found: $$src"; exit 1; fi
+	  log="$(QDIR)/sim.log"; work=$$(mktemp -d)
+	  echo ">> simulating question $(QID) via $(GHDL)  (DUT: $$src)"
+	  if ! $(GHDL) -a --std=$(GHDL_STD) --workdir=$$work "$(CURDIR)/$$src" "$(CURDIR)/$(QDIR)/tb.vhdl" > "$$log" 2>&1; then
+	    echo "  test 1: ANALYZE ERROR  -> $$log"; sed -n '1,6p' "$$log"; rm -rf $$work; exit 1
+	  fi
+	  ( cd $$work && $(GHDL) --elab-run --std=$(GHDL_STD) --workdir=$$work tb ) > "$$log" 2>&1 || true
+	  rm -rf $$work; rm -f "$(QDIR)/PASS_VHDL"
+	  if grep -q "Test PASS" "$$log"; then
+	    echo "  test 1: PASS  (log: $$log)"; touch "$(QDIR)/PASS_VHDL"; exit 0
+	  else
+	    echo "  test 1: FAIL  (log: $$log)"; grep -iE "error|fail|mismatch" "$$log" | head -5; exit 1
+	  fi
+	fi
 
 	# ---- choose the DUT source file -----------------------------------------
 	src="$(DUT)"
@@ -166,7 +189,16 @@ sim:
 	[ "$$FAIL" -eq 0 ]
 
 wave:
-	@vcd="$(QDIR)/test_$(TEST).vcd"
+	@lang=$$(echo "$(LANGUAGE)" | tr '[:lower:]' '[:upper:]')
+	if [ "$$lang" = "GHDL" ] || [ "$$lang" = "NVHDL" ]; then
+	  work=$$(mktemp -d)
+	  $(GHDL) -a --std=$(GHDL_STD) --workdir=$$work "$(CURDIR)/$(QDIR)/solution.vhdl" "$(CURDIR)/$(QDIR)/tb.vhdl"
+	  ( cd "$(QDIR)" && $(GHDL) --elab-run --std=$(GHDL_STD) --workdir=$$work tb --vcd=wave.vcd ) || true
+	  rm -rf $$work
+	  $(GTKWAVE) "$(QDIR)/wave.vcd" >/dev/null 2>&1 &
+	  exit 0
+	fi
+	vcd="$(QDIR)/test_$(TEST).vcd"
 	if [ ! -f "$$vcd" ]; then
 	  echo "No waveform at $$vcd";
 	  if ls $(QDIR)/test_*.vcd >/dev/null 2>&1; then

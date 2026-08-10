@@ -1,51 +1,40 @@
-# Switch debouncer
+# Finite state machine (valid/ready handshake)
 
-**Difficulty:** ⭐⭐⭐⭐ · **Topics:** counter + condition, glitch rejection
+**Difficulty:** ⭐⭐⭐⭐ · **Topics:** ready/valid interface, backpressure
 
 ## Background
-A mechanical switch bounces for a few milliseconds before settling. A
-**debouncer** accepts a new level only after `noisy` has stayed different from
-`clean` for `STABLE` consecutive clocks; any match restarts the count. It is a
-counter guarding a single output bit.
+The **valid/ready handshake** is the universal way blocks pass data. The producer
+asserts `valid` when it has data on `data`; the consumer asserts `ready` when it
+can accept. A **transfer happens only when `valid = '1' and ready = '1'`**. `ready`
+low is *backpressure*: the producer must **hold** its data until accepted — never
+dropping or duplicating a beat.
 
 ## The task
-Update `clean` only after `STABLE` stable clocks; async active-low reset clears it.
+Build `seq_src`: after reset it streams 0, 1, 2, 3, … one value per accepted beat.
+Hold `valid` high, present the current count on `data`, and advance **only when
+`valid and ready`**.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `clk`, `rst_n` | in | std_logic | clock / reset |
-| `noisy` | in  | std_logic | raw input |
-| `clean` | out | std_logic | debounced output |
-
-**Generic:** `STABLE` (default 4)
+| `clk`, `rst_n` | in | std_logic | clock, active-low reset |
+| `ready` | in  | std_logic | consumer can accept |
+| `valid` | out | std_logic | producer has data (always '1') |
+| `data`  | out | std_logic_vector(7:0) | current value |
 
 ## How to approach it
 ```vhdl
-process(clk, rst_n)
-begin
-    if rst_n = '0' then clean_i <= '0'; cnt <= 0;
-    elsif rising_edge(clk) then
-        if noisy /= clean_i then
-            if cnt = STABLE-1 then clean_i <= noisy; cnt <= 0;
-            else cnt <= cnt + 1; end if;
-        else
-            cnt <= 0;             -- input matches output -> reset timer
-        end if;
-    end if;
+valid <= '1';
+process(clk, rst_n) begin
+  if rst_n = '0' then
+    cnt <= (others => '0');
+  elsif rising_edge(clk) then
+    if ready = '1' then cnt <= cnt + 1; end if;   -- valid is always '1'
+  end if;
 end process;
-clean <= clean_i;
+data <= std_logic_vector(cnt);
 ```
 
 ## Common mistakes
-- Not clearing the counter when input matches output (bounces would accumulate).
-- Off-by-one on the threshold (`STABLE` vs `STABLE-1`).
-
-## VHDL notes
-Real designs size `STABLE` for milliseconds at the true clock rate; a small value
-keeps this exercise quick.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0030/solution.vhdl 0030/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+- Advancing every cycle (ignoring `ready`) — you drop beats under backpressure.
+  Advance only when **both** `valid` and `ready` are asserted.

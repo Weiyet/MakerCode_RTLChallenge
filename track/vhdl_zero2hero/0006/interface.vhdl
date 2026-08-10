@@ -1,16 +1,13 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity reduction_ops is
-  port (
-    d        : in  std_logic_vector(7 downto 0);
-    all_ones : out std_logic;
-    any_one  : out std_logic;
-    parity   : out std_logic
-  );
-end entity reduction_ops;
+entity reverser is
+  port (d       : in  std_logic_vector(31 downto 0);
+        bitrev  : out std_logic_vector(31 downto 0);
+        byterev : out std_logic_vector(31 downto 0));
+end entity reverser;
 
-architecture rtl of reduction_ops is
+architecture rtl of reverser is
 begin
   -- your implementation here
 

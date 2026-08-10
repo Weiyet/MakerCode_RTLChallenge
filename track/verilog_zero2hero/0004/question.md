@@ -1,62 +1,46 @@
-# 2-to-1 Multiplexer
+# Vectors (reduction operators)
 
-**Difficulty:** ⭐⭐ · **Topics:** conditional operator, selection
+**Difficulty:** ⭐⭐ · **Topics:** reduction `&` `|` `^`
 
 ## Background
-A **multiplexer** ("mux") is a controlled switch: a select signal chooses which
-of several inputs reaches the output. It is the single most common building
-block in a datapath — every "choose A or B" decision is a mux.
+A **reduction operator** is a single `&`, `|`, or `^` placed *in front of one
+vector*. It folds the whole vector down to one bit by applying that operator
+between all the bits:
+- `&d`  → AND of every bit  (1 only if **all** bits are 1)
+- `|d`  → OR of every bit   (1 if **any** bit is 1)
+- `^d`  → XOR of every bit  (this is the **parity** of the word)
 
-The 2-to-1 mux has two data inputs and one select bit:
-- `sel = 0` → output = `a`
-- `sel = 1` → output = `b`
-
-The cleanest way to write it is the **conditional (ternary) operator**
-`cond ? value_if_true : value_if_false`.
+This is different from the *bitwise* operators you saw in problem 0003: `a & b`
+combines two vectors lane-by-lane and returns a vector; `&a` combines the bits
+*within* one vector and returns a single bit.
 
 ## The task
-Build `mux2to1`.
+For an 8-bit input compute `all_ones = &in`, `any_one = |in`, `parity = ^in`.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `a`   | input  | 1 | data 0 |
-| `b`   | input  | 1 | data 1 |
-| `sel` | input  | 1 | select |
-| `y`   | output | 1 | selected data |
-
-```mermaid
-graph LR
-    a([a]) --> M{{"MUX"}}
-    b([b]) --> M
-    sel([sel]) --> M
-    M --> y([y])
-```
-
-## Truth table
-| sel | y |
-|-----|---|
-| 0   | a |
-| 1   | b |
+| `in`       | input  | 8 | data |
+| `all_ones` | output | 1 | `&in` |
+| `any_one`  | output | 1 | `|in` |
+| `parity`   | output | 1 | `^in` |
 
 ## How to approach it
 ```systemverilog
-assign y = sel ? b : a;
+assign all_ones = &in;
+assign any_one  = |in;
+assign parity   = ^in;
 ```
-Read it as: "if `sel` then `b`, else `a`". Note the order — the *true* branch (`sel=1`)
-gives `b`.
+
+## Worked example
+`in = 8'b1011_0010`: `all_ones=0` (not all bits 1), `any_one=1`, `parity = 1^0^1^1^0^0^1^0 = 0`.
 
 ## Common mistakes
-- Swapping the branches (`sel ? a : b`) and selecting the wrong input.
-- Overthinking it with an `always`/`case` block — perfectly valid, but the
-  ternary is the idiomatic one-liner for a 2:1 mux.
+- Writing `in & in` (bitwise, returns 8 bits) when you meant `&in` (reduction,
+  returns 1 bit).
+- Expecting `parity` to mean "even/odd count" directly — `^in` is 1 when the
+  number of set bits is **odd**.
 
 ## SystemVerilog notes
-The ternary works on vectors too, so the same pattern widens to a bus mux:
-`assign y = sel ? b_bus : a_bus;`. Chaining ternaries builds larger muxes, though
-a `case` inside `always_comb` is clearer past 2 inputs (see problem 0013).
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0004/tb.sv 0004/solution.sv && vvp sim
-```
+Reduction has cousins `~&` (NAND-reduce), `~|` (NOR-reduce), `~^` (XNOR-reduce).
+`^in` is the classic one-liner for a parity bit.

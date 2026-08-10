@@ -1,63 +1,49 @@
-# ALU with enum opcodes
+# Subprograms (functions)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** `enum`, `case`, `always_comb`, status flags
+**Difficulty:** ⭐⭐⭐ · **Topics:** `function automatic`, reuse
 
 ## Background
-An **ALU** performs one of several operations chosen by an opcode. Using raw
-numbers (`3'd5`) for opcodes is error-prone; an **`enum`** gives each a readable
-name and lets the tool width-check them. ALUs also produce **status flags** — here
-`zero`, high when the result is all-zero — which control flow later depends on.
+When repeated combinational math shows up, wrap it in a **`function`**. Functions
+have no time (`#`) and return a value, so they synthesize to pure logic and keep
+your code DRY. Here we convert between binary and **Gray code**, where consecutive
+values differ in exactly one bit — useful for pointers crossing clock domains
+(you will see this in real async FIFOs).
+
+- binary → Gray: `g = b ^ (b >> 1)`
+- Gray → binary: MSB copies through, then `b[i] = b[i+1] ^ g[i]`
 
 ## The task
-8-bit ALU driven by `op`, with a `zero` flag.
-
-| op | name | y |
-|----|------|---|
-| 0 | ADD | a + b |
-| 1 | SUB | a - b |
-| 2 | AND | a & b |
-| 3 | OR  | a \| b |
-| 4 | XOR | a ^ b |
-| 5 | SLL | a << b[2:0] |
-| 6 | SRL | a >> b[2:0] |
-| 7 | SLT | (a < b) ? 1 : 0 (unsigned) |
+Provide both conversions.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `a`, `b` | input  | W | operands |
-| `op`     | input  | 3 | opcode |
-| `y`      | output | W | result |
-| `zero`   | output | 1 | result == 0 |
+| `bin`     | input  | W | binary in |
+| `gray_in` | input  | W | Gray in |
+| `gray`    | output | W | Gray of `bin` |
+| `bin_out` | output | W | binary of `gray_in` |
 
-**Parameter:** `W` (default 8)
+**Parameter:** `W` (default 4)
 
 ## How to approach it
-Name the opcodes, then `case` on them inside `always_comb`, and derive `zero`
-from the result:
 ```systemverilog
-typedef enum logic [2:0] {OP_ADD, OP_SUB, OP_AND, OP_OR, OP_XOR, OP_SLL, OP_SRL, OP_SLT} op_e;
-always_comb begin
-    case (op)               // enum names are usable as case labels
-        OP_ADD: y = a + b;
-        // ...
-        default: y = '0;
-    endcase
-    zero = (y == '0);
-end
+function automatic logic [W-1:0] bin2gray(input logic [W-1:0] b);
+    return b ^ (b >> 1);
+endfunction
+function automatic logic [W-1:0] gray2bin(input logic [W-1:0] g);
+    logic [W-1:0] b;
+    b[W-1] = g[W-1];
+    for (int i = W-2; i >= 0; i--) b[i] = b[i+1] ^ g[i];
+    return b;
+endfunction
+assign gray = bin2gray(bin);
+assign bin_out = gray2bin(gray_in);
 ```
 
 ## Common mistakes
-- Leaving an opcode unhandled (add a `default`).
-- Shift amount width: use `b[2:0]` so shifting an 8-bit value is well-defined.
-- Note some tools reject casting a plain vector to the enum type in the `case`
-  expression, so this design cases on `op` directly with the enum names as labels.
+- gray2bin is a *running* XOR from the MSB down — a single `g ^ (g>>1)` does not
+  invert Gray coding.
 
 ## SystemVerilog notes
-`typedef enum logic [2:0] {...}` fixes the underlying width, so the names are just
-readable constants — the waveform shows `OP_SUB` instead of `3'd1`.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0017/tb.sv 0017/solution.sv && vvp sim
-```
+`function automatic` gives each call its own storage (safe for reuse/recursion).
+Functions may contain loops and locals but no timing controls.

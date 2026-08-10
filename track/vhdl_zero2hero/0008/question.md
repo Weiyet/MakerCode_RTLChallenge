@@ -1,45 +1,49 @@
-# Vector reverse
+# Combinational logic (ripple-carry adder, for-generate)
 
-**Difficulty:** ⭐⭐ · **Topics:** `process`, `for` loop
+**Difficulty:** ⭐⭐⭐ · **Topics:** `generic`, `for ... generate`, carry chain
 
 ## Background
-Some wiring is tedious to write bit-by-bit; a `for` loop inside a combinational
-**`process`** describes it compactly. The loop is **unrolled** at elaboration —
-it is not a runtime loop, just shorthand for repetitive connections. Reversing a
-vector (`y(i) <= d(7-i)`) is the classic example.
+To add `WIDTH`-bit numbers, chain `WIDTH` full adders and let the carry "ripple"
+up. Rather than copy stages, use a **`for ... generate`**, which the tool unrolls
+into that many stages at elaboration. The width is a **`generic`**, so one
+description scales to any size.
 
 ## The task
-Reverse the bit order of an 8-bit vector.
+Add two `WIDTH`-bit numbers plus `cin`, giving `sum` and `cout`, from a generated
+carry chain.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `d` | in  | std_logic_vector(7 downto 0) | data |
-| `y` | out | std_logic_vector(7 downto 0) | bit-reversed |
+| `a`, `b` | in  | std_logic_vector(WIDTH-1 downto 0) | operands |
+| `cin`    | in  | std_logic | carry in |
+| `sum`    | out | std_logic_vector(WIDTH-1 downto 0) | result |
+| `cout`   | out | std_logic | carry out |
+
+**Generic:** `WIDTH` (default 4)
+
+```mermaid
+graph LR
+    cin --> FA0 --> FA1 --> FA2 --> FA3 --> cout
+```
 
 ## How to approach it
+Use an internal `carry` vector one bit wider than the operands:
 ```vhdl
-process(d)
-begin
-    for i in 0 to 7 loop
-        y(i) <= d(7 - i);
-    end loop;
-end process;
+signal carry : std_logic_vector(WIDTH downto 0);
+...
+carry(0) <= cin;
+gen_stage : for i in 0 to WIDTH-1 generate
+    sum(i)     <= a(i) xor b(i) xor carry(i);
+    carry(i+1) <= (a(i) and b(i)) or (a(i) and carry(i)) or (b(i) and carry(i));
+end generate;
+cout <= carry(WIDTH);
 ```
 
 ## Common mistakes
-- Incomplete sensitivity list — list every signal read (or use `process(all)` in
-  VHDL-2008) so simulation matches synthesis.
-- Off-by-one in `d(7-i)`.
+- Forgetting the extra carry bit (`carry` must be `WIDTH+1` long).
+- Using a process `for` loop where structural `for ... generate` is intended.
 
 ## VHDL notes
-`process(all)` (VHDL-2008) builds the sensitivity list automatically, avoiding a
-common source of sim/synth mismatch.
-
-## Run it (GHDL)
-```bash
-# from track/vhdl_zero2hero/
-ghdl -a --std=08 0008/solution.vhdl 0008/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
-A correct run prints `Test PASS`. Swap `solution.vhdl` for `interface.vhdl` to test
-your own answer.
+`generate` elaborates structure, so the bound must be constant/generic. The label
+`gen_stage` names the generated instances in the hierarchy.

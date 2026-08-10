@@ -1,16 +1,19 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity vector_split is
+entity concat_replicate is
   port (
-    d  : in  std_logic_vector(15 downto 0);
-    hi : out std_logic_vector(7 downto 0);
-    lo : out std_logic_vector(7 downto 0)
+    a        : in  std_logic_vector(7 downto 0);
+    b        : in  std_logic_vector(7 downto 0);
+    cat      : out std_logic_vector(15 downto 0);
+    rep4     : out std_logic_vector(31 downto 0);
+    nib_swap : out std_logic_vector(7 downto 0)
   );
-end entity vector_split;
+end entity concat_replicate;
 
-architecture rtl of vector_split is
+architecture rtl of concat_replicate is
 begin
-  hi <= d(15 downto 8);
-  lo <= d(7 downto 0);
+  cat      <= a & b;
+  rep4     <= a & a & a & a;
+  nib_swap <= a(3 downto 0) & a(7 downto 4);
 end architecture rtl;

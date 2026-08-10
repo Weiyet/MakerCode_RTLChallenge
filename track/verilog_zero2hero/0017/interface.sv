@@ -1,11 +1,10 @@
-module alu #(
-    parameter int W = 8
+module gray_codec #(
+    parameter int W = 4
 ) (
-    input  logic [W-1:0] a,
-    input  logic [W-1:0] b,
-    input  logic [2:0]   op,
-    output logic [W-1:0] y,
-    output logic         zero
+    input  logic [W-1:0] bin,
+    input  logic [W-1:0] gray_in,
+    output logic [W-1:0] gray,
+    output logic [W-1:0] bin_out
 );
     // your implementation here
 

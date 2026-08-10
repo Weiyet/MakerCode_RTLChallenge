@@ -1,13 +1,17 @@
-module lfsr8 (
-    input  logic       clk,
-    input  logic       rst_n,
-    input  logic       en,
-    output logic [7:0] q
+module edge_detector (
+    input  logic clk,
+    input  logic rst_n,
+    input  logic sig,
+    output logic rise,
+    output logic fall
 );
-    logic fb;
-    assign fb = q[7] ^ q[5] ^ q[4] ^ q[3];
-
+    logic prev;
     always_ff @(posedge clk or negedge rst_n)
-        if (!rst_n) q <= 8'hFF;
-        else if (en) q <= {q[6:0], fb};
+        if (!rst_n) begin
+            prev <= 1'b0; rise <= 1'b0; fall <= 1'b0;
+        end else begin
+            prev <= sig;
+            rise <=  sig & ~prev;
+            fall <= ~sig &  prev;
+        end
 endmodule

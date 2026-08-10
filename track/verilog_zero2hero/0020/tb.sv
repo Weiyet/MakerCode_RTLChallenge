@@ -1,24 +1,28 @@
 `timescale 1ns/1ps
-module tb #(parameter int W = 4);
+module tb #(parameter int W = 8);
     localparam TB_SIM_TIMEOUT = 100000;
-    logic [W-1:0] bin, gray_in, gray, bin_out;
-    logic [W-1:0] exp_gray, exp_bin;
+    logic clk, rst_n, en;
+    logic [W-1:0] d, q, exp;
     int ERR_COUNT = 0;
 
-    gray_codec #(.W(W)) DUT (.bin(bin), .gray_in(gray_in), .gray(gray), .bin_out(bin_out));
+    enable_register #(.W(W)) DUT (.clk(clk), .rst_n(rst_n), .en(en), .d(d), .q(q));
+
+    initial begin clk = 0; forever #5 clk = ~clk; end
+
+    always_ff @(posedge clk or negedge rst_n)
+        if (!rst_n) exp <= '0; else if (en) exp <= d;
+
+    always @(posedge clk) begin
+        #1;
+        if (q !== exp) begin ERR_COUNT++; $error("%0tns q=%h exp=%h", $time, q, exp); end
+    end
 
     initial begin
-        for (int v = 0; v < (1 << W); v++) begin
-            bin = v[W-1:0];
-            gray_in = v[W-1:0] ^ (v[W-1:0] >> 1);   // a valid gray code
-            #5;
-            exp_gray = bin ^ (bin >> 1);
-            exp_bin  = 0;
-            for (int i = 0; i < W; i++) exp_bin ^= (gray_in >> i);   // gray->bin = xor prefix
-            if (gray    !== exp_gray) begin ERR_COUNT++; $error("%0tns bin=%b gray=%b exp=%b", $time, bin, gray, exp_gray); end
-            if (bin_out !== exp_bin)  begin ERR_COUNT++; $error("%0tns gray_in=%b bin_out=%b exp=%b", $time, gray_in, bin_out, exp_bin); end
-            #5;
-        end
+        rst_n = 0; en = 0; d = 0;
+        repeat(3) @(negedge clk);
+        rst_n = 1;
+        for (int i = 0; i < 50; i++) begin d = $random; en = $random; @(negedge clk); end
+        repeat(2) @(posedge clk);
         check_result;
     end
 

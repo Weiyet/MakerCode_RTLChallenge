@@ -1,36 +1,51 @@
-# Full adder
+# Combinational logic (priority encoder)
 
-**Difficulty:** ⭐⭐ · **Topics:** carry logic
+**Difficulty:** ⭐⭐⭐ · **Topics:** priority via `if/elsif`
 
 ## Background
-A **full adder** sums three bits: `a`, `b`, and a carry-in `cin`. Chaining these
-(each stage's `cout` into the next `cin`) builds any-width adders. `sum` is the
-parity `a xor b xor cin`; `cout` is 1 when **two or more** inputs are 1 (majority).
+A **priority encoder** reports the highest-priority active input when several are
+active at once — here the highest set bit — plus a `valid` flag for "none set". In
+VHDL the natural expression is a chained `if / elsif`: the first true branch wins,
+so listing the MSB first gives it priority.
 
 ## The task
-`(cout, sum) = a + b + cin`.
+Report the index of the highest set bit of `d`; `valid='0'` if none set. (Input is
+named `d`.)
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `a`, `b`, `cin` | in  | std_logic | operands + carry in |
-| `sum`  | out | std_logic | sum bit |
-| `cout` | out | std_logic | carry out |
+| `d`     | in  | std_logic_vector(3 downto 0) | request bits |
+| `pos`   | out | std_logic_vector(1 downto 0) | index of highest set bit |
+| `valid` | out | std_logic | any bit set |
+
+## Behaviour
+| d    | valid | pos |
+|------|-------|-----|
+| 1xxx | 1 | 3 |
+| 01xx | 1 | 2 |
+| 001x | 1 | 1 |
+| 0001 | 1 | 0 |
+| 0000 | 0 | 0 |
 
 ## How to approach it
 ```vhdl
-sum  <= a xor b xor cin;
-cout <= (a and b) or (a and cin) or (b and cin);
+process(all)
+begin
+    valid <= '1';
+    if    d(3) = '1' then pos <= "11";
+    elsif d(2) = '1' then pos <= "10";
+    elsif d(1) = '1' then pos <= "01";
+    elsif d(0) = '1' then pos <= "00";
+    else  pos <= "00"; valid <= '0';
+    end if;
+end process;
 ```
 
 ## Common mistakes
-- `cout <= a and b and cin` is wrong — the carry is the **majority** of the three.
+- Listing bits low-to-high (that would give lowest-bit priority).
+- Forgetting the final `else` to set `valid='0'`.
 
 ## VHDL notes
-Wide adders are normally inferred from `unsigned` `+`; this cell just builds the
-intuition for the generate-based ripple adder next.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0011/solution.vhdl 0011/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+`if/elsif` inherently encodes priority — no wildcard `casez` needed (VHDL has
+`std_match` for don't-care matching if you ever want it).

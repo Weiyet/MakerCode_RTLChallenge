@@ -1,56 +1,43 @@
-# Priority encoder
+# VHDL types (records)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** priority via `if/elsif`
+**Difficulty:** ⭐⭐⭐ · **Topics:** `record` type, concatenation
 
 ## Background
-A **priority encoder** reports the highest-priority active input when several are
-active at once — here the highest set bit — plus a `valid` flag for "none set". In
-VHDL the natural expression is a chained `if / elsif`: the first true branch wins,
-so listing the MSB first gives it priority.
+A VHDL **record** groups named fields — the counterpart of a struct. Unlike a
+SystemVerilog `struct packed`, a record is **not** automatically a bit-vector, so
+to produce a packed bus you flatten it explicitly with `&`. Records are still very
+useful for passing bundles of related signals around a design.
 
 ## The task
-Report the index of the highest set bit of `d`; `valid='0'` if none set. (Input is
-named `d`.)
+Pack a 16-bit control word (MSB-first): `opcode`(4) · `src`(3) · `dst`(3) · `imm`(6).
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `d`     | in  | std_logic_vector(3 downto 0) | request bits |
-| `pos`   | out | std_logic_vector(1 downto 0) | index of highest set bit |
-| `valid` | out | std_logic | any bit set |
-
-## Behaviour
-| d    | valid | pos |
-|------|-------|-----|
-| 1xxx | 1 | 3 |
-| 01xx | 1 | 2 |
-| 001x | 1 | 1 |
-| 0001 | 1 | 0 |
-| 0000 | 0 | 0 |
+| `opcode` | in  | std_logic_vector(3 downto 0) | operation |
+| `src`    | in  | std_logic_vector(2 downto 0) | source reg |
+| `dst`    | in  | std_logic_vector(2 downto 0) | dest reg |
+| `imm`    | in  | std_logic_vector(5 downto 0) | immediate |
+| `word`   | out | std_logic_vector(15 downto 0) | packed word |
 
 ## How to approach it
 ```vhdl
-process(all)
-begin
-    valid <= '1';
-    if    d(3) = '1' then pos <= "11";
-    elsif d(2) = '1' then pos <= "10";
-    elsif d(1) = '1' then pos <= "01";
-    elsif d(0) = '1' then pos <= "00";
-    else  pos <= "00"; valid <= '0';
-    end if;
-end process;
+type ctrl_t is record
+    opcode : std_logic_vector(3 downto 0);
+    src    : std_logic_vector(2 downto 0);
+    dst    : std_logic_vector(2 downto 0);
+    imm    : std_logic_vector(5 downto 0);
+end record;
+...
+c.opcode := opcode; c.src := src; c.dst := dst; c.imm := imm;
+word <= c.opcode & c.src & c.dst & c.imm;
 ```
 
 ## Common mistakes
-- Listing bits low-to-high (that would give lowest-bit priority).
-- Forgetting the final `else` to set `valid='0'`.
+- Expecting `word <= c;` to work — a record is not a vector; concatenate its
+  fields.
+- Field/bit-order: concatenate MSB field first.
 
 ## VHDL notes
-`if/elsif` inherently encodes priority — no wildcard `casez` needed (VHDL has
-`std_match` for don't-care matching if you ever want it).
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0015/solution.vhdl 0015/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+For bit-exact packing you can also use a record with a to/from-`std_logic_vector`
+conversion function, but explicit `&` is the clearest for a fixed layout.

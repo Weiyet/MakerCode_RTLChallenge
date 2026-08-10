@@ -1,19 +1,29 @@
 `timescale 1ns/1ps
-module tb;
+module tb #(parameter int W = 8);
     localparam TB_SIM_TIMEOUT = 100000;
-    logic [1:0] in;
-    logic en;
-    logic [3:0] out, exp;
+    logic [W-1:0] a, b, y, exp;
+    logic [2:0] op;
+    logic zero;
     int ERR_COUNT = 0;
 
-    decoder2to4 DUT (.in(in), .en(en), .out(out));
+    alu #(.W(W)) DUT (.a(a), .b(b), .op(op), .y(y), .zero(zero));
 
     initial begin
-        for (int i = 0; i < 8; i++) begin
-            {en, in} = i[2:0];
+        for (int t = 0; t < 200; t++) begin
+            a = $random; b = $random; op = $random;
             #5;
-            exp = en ? (4'b1 << in) : 4'b0;
-            if (out !== exp) begin ERR_COUNT++; $error("%0tns en=%b in=%b out=%b exp=%b", $time, en, in, out, exp); end
+            case (op)
+                3'd0: exp = a + b;
+                3'd1: exp = a - b;
+                3'd2: exp = a & b;
+                3'd3: exp = a | b;
+                3'd4: exp = a ^ b;
+                3'd5: exp = a << b[2:0];
+                3'd6: exp = a >> b[2:0];
+                default: exp = (a < b) ? 1 : 0;
+            endcase
+            if (y !== exp) begin ERR_COUNT++; $error("%0tns op=%0d a=%h b=%h y=%h exp=%h", $time, op, a, b, y, exp); end
+            if (zero !== (exp == 0)) begin ERR_COUNT++; $error("%0tns zero flag wrong op=%0d y=%h", $time, op, y); end
             #5;
         end
         check_result;

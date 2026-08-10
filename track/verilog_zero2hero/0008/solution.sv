@@ -1,9 +1,22 @@
-module vector_reverse (
-    input  logic [7:0] in,
-    output logic [7:0] out
+module ripple_adder #(
+    parameter int WIDTH = 4
+) (
+    input  logic [WIDTH-1:0] a,
+    input  logic [WIDTH-1:0] b,
+    input  logic             cin,
+    output logic [WIDTH-1:0] sum,
+    output logic             cout
 );
-    always_comb begin
-        for (int i = 0; i < 8; i++)
-            out[i] = in[7-i];
-    end
+    logic [WIDTH:0] carry;
+    assign carry[0] = cin;
+
+    genvar i;
+    generate
+        for (i = 0; i < WIDTH; i++) begin : gen_fa
+            assign sum[i]      = a[i] ^ b[i] ^ carry[i];
+            assign carry[i+1]  = (a[i] & b[i]) | (a[i] & carry[i]) | (b[i] & carry[i]);
+        end
+    endgenerate
+
+    assign cout = carry[WIDTH];
 endmodule

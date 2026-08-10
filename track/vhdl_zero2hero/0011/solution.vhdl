@@ -1,18 +1,24 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity full_adder is
+entity priority_encoder is
   port (
-    a    : in  std_logic;
-    b    : in  std_logic;
-    cin  : in  std_logic;
-    sum  : out std_logic;
-    cout : out std_logic
+    d     : in  std_logic_vector(3 downto 0);
+    pos   : out std_logic_vector(1 downto 0);
+    valid : out std_logic
   );
-end entity full_adder;
+end entity priority_encoder;
 
-architecture rtl of full_adder is
+architecture rtl of priority_encoder is
 begin
-  sum  <= a xor b xor cin;
-  cout <= (a and b) or (a and cin) or (b and cin);
+  process(all)
+  begin
+    valid <= '1';
+    if    d(3) = '1' then pos <= "11";
+    elsif d(2) = '1' then pos <= "10";
+    elsif d(1) = '1' then pos <= "01";
+    elsif d(0) = '1' then pos <= "00";
+    else  pos <= "00"; valid <= '0';
+    end if;
+  end process;
 end architecture rtl;

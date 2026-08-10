@@ -1,9 +1,8 @@
-module edge_detector (
+module seq_detector_1011 (
     input  logic clk,
     input  logic rst_n,
-    input  logic sig,
-    output logic rise,
-    output logic fall
+    input  logic din,
+    output logic detected
 );
     // your implementation here
 

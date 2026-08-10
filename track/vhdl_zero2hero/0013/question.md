@@ -1,47 +1,27 @@
-# 4-to-1 Multiplexer
+# Combinational logic (tri-state / output-enable)
 
-**Difficulty:** ⭐⭐ · **Topics:** `process`, `case`, generic width
+**Difficulty:** ⭐⭐⭐ · **Topics:** high-impedance `'Z'`, output enable, buses
 
 ## Background
-Past two inputs, a **`case`** inside a process is the clear way to write a mux (and
-later any decoder or FSM output). Cover every choice and end with `when others`,
-so no input value is left undefined.
+`std_logic` includes the value **`'Z'`** (high-impedance). A tri-state output is
+driven with data when its **output-enable** is asserted, and released to all-`'Z'`
+otherwise — that is how several drivers share a bus.
 
 ## The task
-Route one of `d0..d3` to `y` based on `sel`, width `W`.
+Build `tristate_buf`: when `oe='1'`, drive `dout = din`; when `oe='0'`, drive
+`dout` to all-`'Z'`.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `d0`..`d3` | in  | std_logic_vector(W-1 downto 0) | data |
-| `sel`      | in  | std_logic_vector(1 downto 0) | select |
-| `y`        | out | std_logic_vector(W-1 downto 0) | selected |
-
-**Generic:** `W` (default 8)
+| `oe`   | in  | std_logic | output enable |
+| `din`  | in  | std_logic_vector(7:0) | data |
+| `dout` | out | std_logic_vector(7:0) | `din` when `oe`, else `'Z'` |
 
 ## How to approach it
 ```vhdl
-process(all)
-begin
-    case sel is
-        when "00"   => y <= d0;
-        when "01"   => y <= d1;
-        when "10"   => y <= d2;
-        when others => y <= d3;
-    end case;
-end process;
+dout <= din when oe = '1' else (others => 'Z');
 ```
-
-## Common mistakes
-- Omitting `when others` — a VHDL `case` on `std_logic_vector` must cover all
-  patterns; `when others` handles the metavalue combinations too.
-- Forgetting `process(all)` / a complete sensitivity list.
 
 ## VHDL notes
-`process(all)` (VHDL-2008) auto-derives the sensitivity list — ideal for
-combinational logic.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0013/solution.vhdl 0013/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+`(others => 'Z')` builds an all-`Z` vector of the target width.

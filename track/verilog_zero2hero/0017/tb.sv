@@ -1,29 +1,22 @@
 `timescale 1ns/1ps
-module tb #(parameter int W = 8);
+module tb #(parameter int W = 4);
     localparam TB_SIM_TIMEOUT = 100000;
-    logic [W-1:0] a, b, y, exp;
-    logic [2:0] op;
-    logic zero;
+    logic [W-1:0] bin, gray_in, gray, bin_out;
+    logic [W-1:0] exp_gray, exp_bin;
     int ERR_COUNT = 0;
 
-    alu #(.W(W)) DUT (.a(a), .b(b), .op(op), .y(y), .zero(zero));
+    gray_codec #(.W(W)) DUT (.bin(bin), .gray_in(gray_in), .gray(gray), .bin_out(bin_out));
 
     initial begin
-        for (int t = 0; t < 200; t++) begin
-            a = $random; b = $random; op = $random;
+        for (int v = 0; v < (1 << W); v++) begin
+            bin = v[W-1:0];
+            gray_in = v[W-1:0] ^ (v[W-1:0] >> 1);   // a valid gray code
             #5;
-            case (op)
-                3'd0: exp = a + b;
-                3'd1: exp = a - b;
-                3'd2: exp = a & b;
-                3'd3: exp = a | b;
-                3'd4: exp = a ^ b;
-                3'd5: exp = a << b[2:0];
-                3'd6: exp = a >> b[2:0];
-                default: exp = (a < b) ? 1 : 0;
-            endcase
-            if (y !== exp) begin ERR_COUNT++; $error("%0tns op=%0d a=%h b=%h y=%h exp=%h", $time, op, a, b, y, exp); end
-            if (zero !== (exp == 0)) begin ERR_COUNT++; $error("%0tns zero flag wrong op=%0d y=%h", $time, op, y); end
+            exp_gray = bin ^ (bin >> 1);
+            exp_bin  = 0;
+            for (int i = 0; i < W; i++) exp_bin ^= (gray_in >> i);   // gray->bin = xor prefix
+            if (gray    !== exp_gray) begin ERR_COUNT++; $error("%0tns bin=%b gray=%b exp=%b", $time, bin, gray, exp_gray); end
+            if (bin_out !== exp_bin)  begin ERR_COUNT++; $error("%0tns gray_in=%b bin_out=%b exp=%b", $time, gray_in, bin_out, exp_bin); end
             #5;
         end
         check_result;

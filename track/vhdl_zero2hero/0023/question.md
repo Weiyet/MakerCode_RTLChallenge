@@ -1,21 +1,24 @@
-# Enabled register (load enable)
+# Sequential logic (up/down counter)
 
-**Difficulty:** ⭐⭐ · **Topics:** clock enable, hold
+**Difficulty:** ⭐⭐⭐ · **Topics:** counters, priority
 
 ## Background
-A register that updates only on some cycles uses a **clock enable**: load `d` when
-`en='1'`, otherwise hold. The "hold" is free — simply have no `else` on the enable.
+A counter adds/subtracts 1 each enabled cycle. Real ones have several controls; the
+skill is expressing **priority** with an `if / elsif` chain: `load` beats `en`,
+`en` beats hold. Keep the count as `unsigned` for `+1`/`-1`.
 
 ## The task
-`W`-bit register with async active-low reset and a load enable.
+`W`-bit up/down counter with synchronous load and async active-low reset.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
 | `clk`, `rst_n` | in | std_logic | clock / async reset |
-| `en` | in  | std_logic | load enable |
-| `d`  | in  | std_logic_vector(W-1 downto 0) | data |
-| `q`  | out | std_logic_vector(W-1 downto 0) | stored value |
+| `load`     | in  | std_logic | synchronous load |
+| `load_val` | in  | std_logic_vector(W-1 downto 0) | value to load |
+| `en`       | in  | std_logic | count enable |
+| `up_down`  | in  | std_logic | 1=up, 0=down |
+| `count`    | out | std_logic_vector(W-1 downto 0) | counter |
 
 **Generic:** `W` (default 8)
 
@@ -23,20 +26,21 @@ A register that updates only on some cycles uses a **clock enable**: load `d` wh
 ```vhdl
 process(clk, rst_n)
 begin
-    if rst_n = '0' then
-        q <= (others => '0');
+    if rst_n = '0' then cnt <= (others => '0');
     elsif rising_edge(clk) then
-        if en = '1' then q <= d; end if;   -- no else -> holds
+        if    load = '1' then cnt <= unsigned(load_val);
+        elsif en   = '1' then
+            if up_down = '1' then cnt <= cnt + 1; else cnt <= cnt - 1; end if;
+        end if;
     end if;
 end process;
+count <= std_logic_vector(cnt);
 ```
 
 ## Common mistakes
-- Adding `else q <= q;` (redundant — omitting it already means hold).
-- Resetting with `q <= '0'` (a scalar) instead of the aggregate
-  `(others => '0')` for a vector.
+- Wrong priority order (checking `en` before `load`).
+- Doing arithmetic on `std_logic_vector` — use an `unsigned` `cnt`.
 
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0023/solution.vhdl 0023/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+## VHDL notes
+`unsigned` wraps modulo `2^W` automatically. Add a compare if you want saturation
+or a terminal-count reload.

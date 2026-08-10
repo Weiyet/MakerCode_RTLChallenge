@@ -1,21 +1,19 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
-entity alu is
+entity gray_codec is
   generic (
-    W : integer := 8
+    W : integer := 4
   );
   port (
-    a    : in  std_logic_vector(W-1 downto 0);
-    b    : in  std_logic_vector(W-1 downto 0);
-    op   : in  std_logic_vector(2 downto 0);
-    y    : out std_logic_vector(W-1 downto 0);
-    zero : out std_logic
+    bin     : in  std_logic_vector(W-1 downto 0);
+    gray_in : in  std_logic_vector(W-1 downto 0);
+    gray    : out std_logic_vector(W-1 downto 0);
+    bin_out : out std_logic_vector(W-1 downto 0)
   );
-end entity alu;
+end entity gray_codec;
 
-architecture rtl of alu is
+architecture rtl of gray_codec is
 begin
   -- your implementation here
 

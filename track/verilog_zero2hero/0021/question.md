@@ -1,51 +1,38 @@
-# D flip-flop
+# Sequential logic (blocking vs non-blocking)
 
-**Difficulty:** ⭐⭐ · **Topics:** `always_ff`, non-blocking `<=`, clock edge
+**Difficulty:** ⭐⭐⭐ · **Topics:** `<=` vs `=`, scheduling, shift register
 
 ## Background
-Everything so far was **combinational** — outputs follow inputs instantly. A
-**flip-flop** adds *memory*: it samples its input on the rising clock edge and
-holds that value until the next edge. This is the atom of all sequential logic.
-Describe it with `always_ff @(posedge clk)` and the **non-blocking** assignment
-`<=`, which models "all flops sample together, then update together".
+Inside a clocked `always_ff`, **use non-blocking `<=`**. Non-blocking assignments
+all sample their right-hand sides first, then update together at the clock edge —
+so every flop sees the *old* value of its neighbour. That is exactly what a shift
+register needs.
+
+If you use **blocking `=`** in a chain, each statement updates immediately, so a
+later line sees the *new* value — and a 3-stage shift register collapses into a
+single stage (all bits equal the input). Same code shape, very different hardware.
 
 ## The task
-On each rising edge of `clk`, `q` takes `d`.
+Build `shift3` (a 3-stage shift register): each clock, `q[0]` takes `din`,
+`q[1]` takes the old `q[0]`, `q[2]` takes the old `q[1]`. Use **non-blocking**
+assignments so the stages actually delay.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
 | `clk` | input  | 1 | clock |
-| `d`   | input  | 1 | data |
-| `q`   | output | 1 | registered data |
-
-```wavedrom
-{ "signal": [
-  {"name": "clk", "wave": "p......"},
-  {"name": "d",   "wave": "0.1..0."},
-  {"name": "q",   "wave": "0..1..0"}
-]}
-```
-Notice `q` follows `d` but shifted to the next clock edge.
+| `din` | input  | 1 | serial in |
+| `q`   | output | 3 | `q[k]` = din delayed k+1 cycles |
 
 ## How to approach it
 ```systemverilog
-always_ff @(posedge clk)
-    q <= d;
+always_ff @(posedge clk) begin
+    q[0] <= din;
+    q[1] <= q[0];   // sees OLD q[0] because of non-blocking
+    q[2] <= q[1];
+end
 ```
 
 ## Common mistakes
-- Using blocking `=` for state — always use `<=` in `always_ff`. Mixing them
-  causes simulation/synthesis mismatches and race-like bugs.
-- Reading `q` combinationally elsewhere and expecting the *new* value in the same
-  cycle — it updates only at the edge.
-
-## SystemVerilog notes
-`always_ff` tells the tool "this is a register"; it will error if the body cannot
-be synthesized as flops. Combinational logic uses `always_comb` with `=`;
-sequential uses `always_ff` with `<=`.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0021/tb.sv 0021/solution.sv && vvp sim
-```
+- Using `=` (blocking): `q[1]=q[0]` then sees the just-written `q[0]`, so all
+  three stages become `din` — the test's staggered delays then fail.

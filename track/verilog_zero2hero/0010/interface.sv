@@ -1,8 +1,7 @@
-module half_adder (
-    input  logic a,
-    input  logic b,
-    output logic sum,
-    output logic cout
+module decoder2to4 (
+    input  logic [1:0] in,
+    input  logic       en,
+    output logic [3:0] out
 );
     // your implementation here
 

@@ -1,50 +1,43 @@
-# Vector split
+# Vectors (concatenation & replication)
 
-**Difficulty:** ⭐ · **Topics:** vectors, bit-slicing, `logic [N-1:0]`
+**Difficulty:** ⭐⭐ · **Topics:** `{a,b}` concat, `{N{x}}` replication
 
 ## Background
-A **vector** is a bundle of wires treated as one multi-bit signal, declared with
-a range: `logic [15:0] d;` is 16 bits, numbered 15 (MSB) down to 0 (LSB). You can
-grab a contiguous run of bits with a **part-select** `d[hi:lo]`, which yields
-`hi-lo+1` bits. Splitting a wide word into fields is one of the most common
-things you do in RTL (think: an address into tag/index/offset).
+The braces `{ }` join signals together. **Concatenation** `{a, b}` places `a` in
+the more-significant bits and `b` below it, forming a wider vector. **Replication**
+`{N{x}}` repeats `x` N times. Together they let you rearrange and pad buses
+without any gates — it is pure wiring.
 
 ## The task
-Split a 16-bit word into its upper and lower bytes.
+Given bytes `a` and `b`, build:
+- `cat`      = `{a, b}` (16 bits, `a` in the MSBs)
+- `rep4`     = four copies of `a` (32 bits)
+- `nib_swap` = `a` with its two nibbles swapped
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `in` | input  | 16 | packed word |
-| `hi` | output | 8  | `in[15:8]` |
-| `lo` | output | 8  | `in[7:0]` |
-
-```mermaid
-graph LR
-    in["in[15:0]"] --> hi["hi = in[15:8]"]
-    in --> lo["lo = in[7:0]"]
-```
+| `a`, `b`   | input  | 8  | operands |
+| `cat`      | output | 16 | `{a,b}` |
+| `rep4`     | output | 32 | `{4{a}}` |
+| `nib_swap` | output | 8  | `{a[3:0], a[7:4]}` |
 
 ## How to approach it
 ```systemverilog
-assign hi = in[15:8];
-assign lo = in[7:0];
+assign cat      = {a, b};
+assign rep4     = {4{a}};
+assign nib_swap = {a[3:0], a[7:4]};
 ```
+`nib_swap` reads: "put the low nibble on top, the high nibble on the bottom".
 
 ## Worked example
-`in = 16'hABCD` → `hi = 8'hAB`, `lo = 8'hCD`.
+`a = 8'hA5` → `nib_swap = 8'h5A`; `rep4 = 32'hA5A5A5A5`.
 
 ## Common mistakes
-- Reversed range (`in[8:15]`) — the high index must come first for a `[hi:lo]`
-  descending vector.
-- Width mismatch: `hi` is 8 bits, so it must be assigned an 8-bit slice.
+- Getting the order backwards — the **leftmost** item in `{ }` lands in the MSBs.
+- Total width must match the target: `{a,b}` is 16 bits for a 16-bit `cat`.
+- Nested braces for replication: it is `{4{a}}`, not `{4 a}` or `{4,a}`.
 
 ## SystemVerilog notes
-For a *variable* start position use the indexed part-select `in[base +: 8]`
-(8 bits starting at `base`, going up) or `in[top -: 8]` (going down). Constant
-`[hi:lo]` is enough here.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0005/tb.sv 0005/solution.sv && vvp sim
-```
+Concatenation and replication compose: `{2{a}, b}` is `{a, a, b}`. This is how you
+sign-extend or pad: `{ {8{v[7]}}, v }` sign-extends an 8-bit `v` to 16 bits.

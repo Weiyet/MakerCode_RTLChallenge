@@ -1,19 +1,15 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity concat_replicate is
-  port (
-    a        : in  std_logic_vector(7 downto 0);
-    b        : in  std_logic_vector(7 downto 0);
-    cat      : out std_logic_vector(15 downto 0);
-    rep4     : out std_logic_vector(31 downto 0);
-    nib_swap : out std_logic_vector(7 downto 0)
-  );
-end entity concat_replicate;
+entity adders is
+  port (a, b, cin : in  std_logic;
+        h_sum, h_cout, sum, cout : out std_logic);
+end entity adders;
 
-architecture rtl of concat_replicate is
+architecture rtl of adders is
 begin
-  cat      <= a & b;
-  rep4     <= a & a & a & a;
-  nib_swap <= a(3 downto 0) & a(7 downto 4);
+  h_sum  <= a xor b;
+  h_cout <= a and b;
+  sum    <= a xor b xor cin;
+  cout   <= (a and b) or (a and cin) or (b and cin);
 end architecture rtl;

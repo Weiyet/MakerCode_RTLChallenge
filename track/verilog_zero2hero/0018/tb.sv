@@ -1,22 +1,25 @@
 `timescale 1ns/1ps
 module tb;
     localparam TB_SIM_TIMEOUT = 100000;
-    logic [3:0]  opcode;
-    logic [2:0]  src, dst;
-    logic [5:0]  imm;
-    logic [15:0] word, exp;
+    logic clk, d, q, q_exp;
     int ERR_COUNT = 0;
 
-    ctrl_pack DUT (.opcode(opcode), .src(src), .dst(dst), .imm(imm), .word(word));
+    dff DUT (.clk(clk), .d(d), .q(q));
+
+    initial begin clk = 0; forever #5 clk = ~clk; end
+
+    always_ff @(posedge clk) q_exp <= d;
+
+    always @(posedge clk) begin
+        #1;
+        if (q !== q_exp) begin ERR_COUNT++; $error("%0tns q=%b expected=%b", $time, q, q_exp); end
+    end
 
     initial begin
-        for (int t = 0; t < 40; t++) begin
-            opcode = $random; src = $random; dst = $random; imm = $random;
-            #5;
-            exp = {opcode, src, dst, imm};
-            if (word !== exp) begin ERR_COUNT++; $error("%0tns word=%h exp=%h", $time, word, exp); end
-            #5;
-        end
+        d = 0;
+        @(negedge clk);
+        for (int i = 0; i < 40; i++) begin d = $random; @(negedge clk); end
+        repeat(2) @(posedge clk);
         check_result;
     end
 

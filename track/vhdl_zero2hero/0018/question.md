@@ -1,48 +1,45 @@
-# Records (grouping fields)
+# Sequential logic (D flip-flop)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** `record` type, concatenation
+**Difficulty:** ⭐⭐ · **Topics:** clocked `process`, `rising_edge`
 
 ## Background
-A VHDL **record** groups named fields — the counterpart of a struct. Unlike a
-SystemVerilog `struct packed`, a record is **not** automatically a bit-vector, so
-to produce a packed bus you flatten it explicitly with `&`. Records are still very
-useful for passing bundles of related signals around a design.
+Combinational logic follows its inputs instantly; a **flip-flop** adds memory — it
+samples `d` on the rising clock edge and holds it. This is the atom of sequential
+logic. In VHDL you write it as a `process(clk)` guarded by `rising_edge(clk)`,
+using signal assignment `<=`.
 
 ## The task
-Pack a 16-bit control word (MSB-first): `opcode`(4) · `src`(3) · `dst`(3) · `imm`(6).
+On each rising edge of `clk`, `q` takes `d`.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `opcode` | in  | std_logic_vector(3 downto 0) | operation |
-| `src`    | in  | std_logic_vector(2 downto 0) | source reg |
-| `dst`    | in  | std_logic_vector(2 downto 0) | dest reg |
-| `imm`    | in  | std_logic_vector(5 downto 0) | immediate |
-| `word`   | out | std_logic_vector(15 downto 0) | packed word |
+| `clk` | in  | std_logic | clock |
+| `d`   | in  | std_logic | data |
+| `q`   | out | std_logic | registered data |
+
+```wavedrom
+{ "signal": [
+  {"name":"clk","wave":"p......"},
+  {"name":"d",  "wave":"0.1..0."},
+  {"name":"q",  "wave":"0..1..0"}
+]}
+```
 
 ## How to approach it
 ```vhdl
-type ctrl_t is record
-    opcode : std_logic_vector(3 downto 0);
-    src    : std_logic_vector(2 downto 0);
-    dst    : std_logic_vector(2 downto 0);
-    imm    : std_logic_vector(5 downto 0);
-end record;
-...
-c.opcode := opcode; c.src := src; c.dst := dst; c.imm := imm;
-word <= c.opcode & c.src & c.dst & c.imm;
+process(clk)
+begin
+    if rising_edge(clk) then
+        q <= d;
+    end if;
+end process;
 ```
 
 ## Common mistakes
-- Expecting `word <= c;` to work — a record is not a vector; concatenate its
-  fields.
-- Field/bit-order: concatenate MSB field first.
+- Assigning outside the `if rising_edge(clk)` guard (creates a latch or a wire).
+- Using `:=` on a signal — flops use `<=`.
 
 ## VHDL notes
-For bit-exact packing you can also use a record with a to/from-`std_logic_vector`
-conversion function, but explicit `&` is the clearest for a fixed layout.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0018/solution.vhdl 0018/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+`rising_edge`/`falling_edge` (from `std_logic_1164`) are the idiomatic edge tests,
+safer than `clk'event and clk='1'`.

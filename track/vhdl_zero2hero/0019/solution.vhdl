@@ -1,27 +1,31 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
-use ieee.math_real.all;
 
-entity popcount is
-  generic (
-    WIDTH : integer := 8
-  );
+entity dff_reset is
   port (
-    d     : in  std_logic_vector(WIDTH-1 downto 0);
-    count : out std_logic_vector(integer(ceil(log2(real(WIDTH+1))))-1 downto 0)
+    clk     : in  std_logic;
+    rst_n   : in  std_logic;
+    d       : in  std_logic;
+    q_sync  : out std_logic;
+    q_async : out std_logic
   );
-end entity popcount;
+end entity dff_reset;
 
-architecture rtl of popcount is
+architecture rtl of dff_reset is
 begin
-  process(all)
-    variable c : integer;
+  process(clk)
   begin
-    c := 0;
-    for i in d'range loop
-      if d(i) = '1' then c := c + 1; end if;
-    end loop;
-    count <= std_logic_vector(to_unsigned(c, count'length));
+    if rising_edge(clk) then
+      if rst_n = '0' then q_sync <= '0'; else q_sync <= d; end if;
+    end if;
+  end process;
+
+  process(clk, rst_n)
+  begin
+    if rst_n = '0' then
+      q_async <= '0';
+    elsif rising_edge(clk) then
+      q_async <= d;
+    end if;
   end process;
 end architecture rtl;

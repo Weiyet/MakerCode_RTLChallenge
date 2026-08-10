@@ -1,62 +1,50 @@
-# ALU with an enumerated opcode
+# Subprograms (functions)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** enumerated `type`, `'val`, `case`, `numeric_std`
+**Difficulty:** ⭐⭐⭐ · **Topics:** `function`, reuse
 
 ## Background
-An **ALU** does one of several operations chosen by an opcode. Rather than switch
-on raw numbers, define an **enumerated type** (`type op_t is (OP_ADD, ...)`) for
-readable names. The opcode arrives as a `std_logic_vector`, so convert it with
-`op_t'val(to_integer(unsigned(op)))` — the `'val` attribute maps an integer
-position to the matching enum value. Arithmetic uses `unsigned` from
-`ieee.numeric_std`.
+Wrap repeated combinational math in a **`function`** declared in the architecture.
+Here we convert between binary and **Gray code** (consecutive values differ in one
+bit — handy for clock-domain-crossing pointers).
+- binary → Gray: `g = b xor (b srl 1)`, i.e. `b xor ('0' & b(high downto 1))`.
+- Gray → binary: MSB copies through, then `b(i) = b(i+1) xor g(i)`.
 
 ## The task
-8-bit ALU with a `zero` flag.
-
-| op | name | y |
-|----|------|---|
-| 0 | ADD | a + b |
-| 1 | SUB | a - b |
-| 2 | AND | a and b |
-| 3 | OR  | a or b |
-| 4 | XOR | a xor b |
-| 5 | SLL | a shifted left by b(2:0) |
-| 6 | SRL | a shifted right by b(2:0) |
-| 7 | SLT | 1 if a < b (unsigned) else 0 |
+Provide both conversions.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `a`, `b` | in  | std_logic_vector(W-1 downto 0) | operands |
-| `op`     | in  | std_logic_vector(2 downto 0)   | opcode |
-| `y`      | out | std_logic_vector(W-1 downto 0) | result |
-| `zero`   | out | std_logic | result = 0 |
+| `bin`     | in  | std_logic_vector(W-1 downto 0) | binary in |
+| `gray_in` | in  | std_logic_vector(W-1 downto 0) | Gray in |
+| `gray`    | out | std_logic_vector(W-1 downto 0) | Gray of `bin` |
+| `bin_out` | out | std_logic_vector(W-1 downto 0) | binary of `gray_in` |
 
-**Generic:** `W` (default 8)
+**Generic:** `W` (default 4)
 
 ## How to approach it
 ```vhdl
-type op_t is (OP_ADD, OP_SUB, OP_AND, OP_OR, OP_XOR, OP_SLL, OP_SRL, OP_SLT);
+function bin2gray(b : std_logic_vector) return std_logic_vector is
+begin
+    return b xor ('0' & b(b'high downto 1));
+end function;
+
+function gray2bin(g : std_logic_vector) return std_logic_vector is
+    variable b : std_logic_vector(g'range);
+begin
+    b(b'high) := g(g'high);
+    for i in g'high-1 downto 0 loop b(i) := b(i+1) xor g(i); end loop;
+    return b;
+end function;
 ...
-case op_t'val(to_integer(unsigned(op))) is
-    when OP_ADD => ys := std_logic_vector(unsigned(a) + unsigned(b));
-    when OP_SLL => ys := std_logic_vector(shift_left(unsigned(a), sh));
-    -- ...
-end case;
+gray <= bin2gray(bin);
+bin_out <= gray2bin(gray_in);
 ```
-Use `shift_left`/`shift_right` (numeric_std) for the shifts and derive `zero`
-from the result.
 
 ## Common mistakes
-- Forgetting `use ieee.numeric_std.all;`.
-- Trying to do arithmetic directly on `std_logic_vector` — cast to `unsigned`
-  first.
+- gray2bin is a running XOR from the MSB — a single `g xor (g srl 1)` does not
+  invert it.
 
 ## VHDL notes
-`op_t'val(n)` is the inverse of `op_t'pos(v)`. Enumerated states/opcodes show up
-by name in the waveform.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0017/solution.vhdl 0017/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+Functions take *unconstrained* vector parameters and use attributes (`'high`,
+`'range`) to work at any width — that is what makes them reusable.

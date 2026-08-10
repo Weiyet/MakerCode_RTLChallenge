@@ -1,11 +1,10 @@
-module debouncer #(
-    parameter int STABLE = 4
-) (
-    input  logic clk,
-    input  logic rst_n,
-    input  logic noisy,
-    output logic clean
+module seq_src (
+    input  logic       clk,
+    input  logic       rst_n,
+    input  logic       ready,
+    output logic       valid,
+    output logic [7:0] data
 );
-    // your implementation here
+    // hold valid high; advance data only when valid && ready
 
 endmodule

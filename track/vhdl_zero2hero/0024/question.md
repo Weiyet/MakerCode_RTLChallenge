@@ -1,45 +1,37 @@
-# Shift register (SIPO)
+# Sequential logic (LFSR)
 
-**Difficulty:** ⭐⭐ · **Topics:** shifting, `&`
+**Difficulty:** ⭐⭐⭐ · **Topics:** feedback shift register, XOR taps
 
 ## Background
-A **shift register** moves its bits along each clock. Serial-in parallel-out
-collects a serial stream into a word — the receiver half of a serial link. Each
-clock: `q <= q(W-2 downto 0) & sin` drops the MSB, shifts up, and inserts `sin` at
-the LSB.
+A **Linear-Feedback Shift Register** feeds back the XOR of chosen bits (**taps**)
+as its serial input. With the right taps it visits all `2^N-1` non-zero states — a
+cheap pseudo-random generator. This 8-bit LFSR uses taps 8,6,5,4
+(`x^8 + x^6 + x^5 + x^4 + 1`).
 
 ## The task
-Shift left, inserting `sin` at the LSB; async active-low reset clears `q`.
+`fb = q(7) xor q(5) xor q(4) xor q(3)`, then shift left inserting `fb`. Seed to
+`x"FF"` on reset; advance only when `en='1'`.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `clk`, `rst_n` | in | std_logic | clock / async reset |
-| `sin` | in  | std_logic | serial input |
-| `q`   | out | std_logic_vector(W-1 downto 0) | parallel output |
-
-**Generic:** `W` (default 8)
+| `clk`, `rst_n` | in | std_logic | clock / async reset (seed FF) |
+| `en`  | in  | std_logic | advance enable |
+| `q`   | out | std_logic_vector(7 downto 0) | LFSR state |
 
 ## How to approach it
 ```vhdl
+fb <= q_i(7) xor q_i(5) xor q_i(4) xor q_i(3);
 process(clk, rst_n)
 begin
-    if rst_n = '0' then
-        q_i <= (others => '0');
+    if rst_n = '0' then q_i <= x"FF";
     elsif rising_edge(clk) then
-        q_i <= q_i(W-2 downto 0) & sin;
+        if en = '1' then q_i <= q_i(6 downto 0) & fb; end if;
     end if;
 end process;
 q <= q_i;
 ```
-(An internal `q_i` is used because an `out` port cannot be read back.)
 
 ## Common mistakes
-- Reading the `out` port `q` directly — keep an internal signal and drive `q` from
-  it.
-- Shifting the wrong direction.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0024/solution.vhdl 0024/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+- Seeding to 0 — all-zero is a lock-up state.
+- Wrong tap set (only specific taps give the maximal-length sequence).

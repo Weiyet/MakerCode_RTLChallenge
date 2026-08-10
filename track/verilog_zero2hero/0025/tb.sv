@@ -1,38 +1,33 @@
 `timescale 1ns/1ps
-module tb #(parameter int W = 8);
+module tb;
     localparam TB_SIM_TIMEOUT = 100000;
-    logic clk, rst_n, load, en, up_down;
-    logic [W-1:0] load_val, count, exp;
+    localparam AW = 4, DW = 8;
+    logic clk = 0, we;
+    logic [AW-1:0] addr;
+    logic [DW-1:0] wdata, rdata;
+    logic [DW-1:0] model [0:(1<<AW)-1];
+    logic [DW-1:0] exp;
     int ERR_COUNT = 0;
-
-    updown_counter #(.W(W)) DUT (.clk(clk), .rst_n(rst_n), .load(load),
-        .load_val(load_val), .en(en), .up_down(up_down), .count(count));
-
-    initial begin clk = 0; forever #5 clk = ~clk; end
-
-    always_ff @(posedge clk or negedge rst_n)
-        if (!rst_n)    exp <= '0;
-        else if (load) exp <= load_val;
-        else if (en)   exp <= up_down ? exp + 1'b1 : exp - 1'b1;
-
-    always @(posedge clk) begin
-        #1;
-        if (count !== exp) begin ERR_COUNT++; $error("%0tns count=%0d exp=%0d", $time, count, exp); end
-    end
-
+    ram #(.AW(AW), .DW(DW)) DUT (.clk(clk), .we(we), .addr(addr), .wdata(wdata), .rdata(rdata));
+    always #5 clk = ~clk;
     initial begin
-        rst_n = 0; load = 0; en = 0; up_down = 1; load_val = 0;
-        repeat(3) @(negedge clk);
-        rst_n = 1;
-        for (int i = 0; i < 80; i++) begin
-            load = ($random % 8 == 0); load_val = $random;
-            en = $random; up_down = $random;
+        we = 0; addr = 0; wdata = 0;
+        // Phase 1: write every location = addr*3+1
+        @(negedge clk);
+        for (int i = 0; i < (1<<AW); i++) begin
+            we = 1; addr = i[AW-1:0]; wdata = (i*3 + 1); model[i] = wdata;
             @(negedge clk);
         end
-        repeat(2) @(posedge clk);
+        we = 0;
+        // Phase 2: read back; rdata is registered => compare to address driven ONE cycle earlier
+        for (int i = 0; i < (1<<AW); i++) begin
+            addr = i[AW-1:0];
+            @(posedge clk); #1;                 // rdata now reflects THIS addr
+            exp = model[i];
+            if (rdata !== exp) begin ERR_COUNT++; $error("read addr=%0d rdata=%h exp=%h", i, rdata, exp); end
+        end
         check_result;
     end
-
     task check_result;
     begin
         if (ERR_COUNT > 0) $display("Test failed with %0d errors.", ERR_COUNT);
@@ -40,7 +35,6 @@ module tb #(parameter int W = 8);
         $finish;
     end
     endtask
-
     string filename;
     initial begin
         if ($value$plusargs("VCDFILE=%s", filename)) begin

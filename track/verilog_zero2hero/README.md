@@ -17,75 +17,99 @@ Every folder `NNNN/` contains:
 | `tb.sv`        | a self-checking testbench that prints `Test PASS` or `$error`s |
 
 ## How to run (Icarus Verilog)
+This track reuses the repo-root `Makefile` via `include`:
 ```bash
-# check your own answer
-iverilog -g2012 -s tb -o sim NNNN/tb.sv NNNN/interface.sv && vvp sim
-# or check the reference solution
-iverilog -g2012 -s tb -o sim NNNN/tb.sv NNNN/solution.sv && vvp sim
+make sim  QUESTION=5                  # test your interface.sv
+make sim  QUESTION=5 DUT=solution.sv  # test the reference solution
+make wave QUESTION=5                   # open the waveform in gtkwave
 ```
-A run ends with `Test PASS` when correct; any mismatch prints an `ERROR: ...tb.sv`
-line (same convention as the main `questions/` bank).
+A run ends with `test 1: PASS` when correct; any mismatch prints an `ERROR:
+...tb.sv` line (same convention as the main `questions/` bank). You can also drive
+the tools by hand: `iverilog -g2012 -s tb -o sim NNNN/tb.sv NNNN/solution.sv && vvp sim`.
 
-A machine-readable index of every problem (id, title, module, difficulty, topics)
+A machine-readable index of every problem (id, title, difficulty, topics)
 is in [`rtl_challenge_db.csv`](rtl_challenge_db.csv).
 
 ## Curriculum
 
-### Module 1 — Gates & wires
+### Module 1 — Combinational basics
 | # | Problem | Focus |
 |---|---------|-------|
-| [0000](0000/) | Wire | modules, ports, `assign`, `logic` |
-| [0001](0001/) | Constants | literals, constant drivers |
-| [0002](0002/) | Inverter (NOT) | bitwise `~` |
-| [0003](0003/) | Basic logic gates | `&` `|` `^` and negations |
-| [0004](0004/) | 2-to-1 mux | ternary select |
+| [0000](0000/) | Wires, assign & constants | modules, ports, `assign`, `1'b0/1'b1` |
+| [0001](0001/) | Basic gates (incl. NOT) | `~` `&` `|` `^` and negations |
+| [0002](0002/) | 2-to-1 multiplexer | ternary select |
 
-### Module 2 — Vectors & SystemVerilog data types
+### Module 2 — Vectors
 | # | Problem | Focus |
 |---|---------|-------|
-| [0005](0005/) | Vector split | part-select `[hi:lo]` |
-| [0006](0006/) | Reduction operators | `&` `|` `^` reductions |
-| [0007](0007/) | Concatenation & replication | `{a,b}`, `{N{x}}` |
-| [0008](0008/) | Vector reverse | `for` loop in `always_comb` |
-| [0009](0009/) | Byte reverse | packed vs unpacked arrays |
+| [0003](0003/) | Part-select & slicing | `[hi:lo]` |
+| [0004](0004/) | Reduction operators | `&` `|` `^` reductions |
+| [0005](0005/) | Concatenation & replication | `{a,b}`, `{N{x}}` |
+| [0006](0006/) | Arrays & bit/byte reverse | `for` loop, byte lanes / endianness |
 
 ### Module 3 — Combinational building blocks
 | # | Problem | Focus |
 |---|---------|-------|
-| [0010](0010/) | Half adder | sum/carry from gates |
-| [0011](0011/) | Full adder | carry logic |
-| [0012](0012/) | Ripple-carry adder | `generate` / `genvar`, `parameter` |
-| [0013](0013/) | 4-to-1 mux | `always_comb` + `case` |
-| [0014](0014/) | 2-to-4 decoder | one-hot, enable |
-| [0015](0015/) | Priority encoder | `casez`, don't-cares |
-| [0016](0016/) | BCD to 7-segment | look-up `case` |
+| [0007](0007/) | Half & full adder | sum/carry, carry-in |
+| [0008](0008/) | Ripple-carry adder | `generate` / `genvar`, `parameter` |
+| [0009](0009/) | 4-to-1 multiplexer | `always_comb` + `case` |
+| [0010](0010/) | 2-to-4 decoder | one-hot, enable |
+| [0011](0011/) | Priority encoder | `casez`, don't-cares |
+| [0012](0012/) | Avoiding inferred latches | `always_comb` completeness, default assignment |
+| [0013](0013/) | Tri-state / output-enable | high-impedance `z`, buses |
 
 ### Module 4 — SystemVerilog features
 | # | Problem | Focus |
 |---|---------|-------|
-| [0017](0017/) | ALU with enum opcodes | `enum`, status flag |
-| [0018](0018/) | Packed struct | `struct packed`, `typedef` |
-| [0019](0019/) | Population count | `parameter`, `$clog2` |
-| [0020](0020/) | Gray / binary codec | `function automatic` |
+| [0014](0014/) | ALU with enum opcodes | `enum`, status flag |
+| [0015](0015/) | Packed struct | `struct packed`, `typedef` |
+| [0016](0016/) | Population count | `parameter`, `$clog2` |
+| [0017](0017/) | Gray / binary codec | `function automatic` |
 
 ### Module 5 — Sequential logic (`always_ff`)
 | # | Problem | Focus |
 |---|---------|-------|
-| [0021](0021/) | D flip-flop | `always_ff`, non-blocking `<=` |
-| [0022](0022/) | Reset styles | sync vs async reset |
-| [0023](0023/) | Enabled register | clock enable / hold |
-| [0024](0024/) | Shift register (SIPO) | shifting |
-| [0025](0025/) | Up/down counter | load / enable priority |
-| [0026](0026/) | LFSR | feedback taps, pseudo-random |
+| [0018](0018/) | D flip-flop | `always_ff`, non-blocking `<=` |
+| [0019](0019/) | Reset styles | sync vs async reset |
+| [0020](0020/) | Enable & load | clock enable / hold |
+| [0021](0021/) | Blocking vs non-blocking | `=` vs `<=` scheduling |
+| [0022](0022/) | Shift register (SIPO) | shifting |
+| [0023](0023/) | Up/down counter | load / enable priority |
+| [0024](0024/) | LFSR | feedback taps, pseudo-random |
+| [0025](0025/) | Memory / register file | 2-D arrays, registered read |
 
 ### Module 6 — FSMs & the hero
 | # | Problem | Focus |
 |---|---------|-------|
-| [0027](0027/) | Edge detector | one-cycle pulse |
-| [0028](0028/) | Sequence detector "1011" | Moore FSM, `enum` states |
-| [0029](0029/) | Mealy detector "11" | Mealy vs Moore |
-| [0030](0030/) | Switch debouncer | counter + FSM |
+| [0026](0026/) | Edge detector | one-cycle pulse |
+| [0027](0027/) | Sequence detector "1011" | Moore FSM, `enum` states |
+| [0028](0028/) | Mealy detector "11" | Mealy vs Moore |
+| [0029](0029/) | Switch debouncer | counter + FSM |
+| [0030](0030/) | Valid/ready handshake | ready/valid, backpressure |
 | [0031](0031/) | **UART transmitter** | FSM + datapath (hero) |
+
+### Module 7 — Hierarchy & module instantiation
+The provided sub-module lives in each `tb.sv`; your job is to **instantiate** it
+in `interface.sv`. Each `question.md` lists the sub-module's name and ports.
+
+| # | Problem | Focus |
+|---|---------|-------|
+| [0032](0032/) | Instantiate by position | positional port connection |
+| [0033](0033/) | Instantiate by name | `.port(sig)` named connection |
+| [0034](0034/) | Parameter override | `#(.WIDTH(...))` parameterized reuse |
+| [0035](0035/) | Connecting instances & vectors | wiring instances, vector ports, tap mux |
+| [0036](0036/) | Hierarchical adder | build adder32 from two add16, carry chain |
+| [0037](0037/) | Adder-subtractor | two's-complement XOR trick + hierarchy |
+
+### Module 8 — Subprograms & `fork` (simulation constructs)
+Procedural abstraction and concurrency. `function` and no-time `task`s are
+synthesizable; **`fork`/`join*` and time-consuming tasks are simulation-only** —
+each `question.md` flags this. Verification knowledge every RTL engineer needs.
+
+| # | Problem | Focus |
+|---|---------|-------|
+| [0038](0038/) | Functions and tasks | `function` return vs `task` outputs, `automatic` |
+| [0039](0039/) | `fork` family | `join` / `join_any` / `join_none`, parallelism |
 
 ---
 *Difficulty is marked with ⭐ (getting started) up to ⭐⭐⭐⭐⭐ (hero) inside each

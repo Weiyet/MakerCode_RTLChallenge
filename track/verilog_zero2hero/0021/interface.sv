@@ -1,8 +1,8 @@
-module dff (
-    input  logic clk,
-    input  logic d,
-    output logic q
+module shift3 (
+    input  logic       clk,
+    input  logic       din,
+    output logic [2:0] q
 );
-    // your implementation here
+    // use non-blocking assignments in always_ff
 
 endmodule

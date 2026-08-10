@@ -1,27 +1,34 @@
 `timescale 1ns/1ps
 module tb #(parameter int W = 8);
     localparam TB_SIM_TIMEOUT = 100000;
-    logic clk, rst_n, en;
-    logic [W-1:0] d, q, exp;
+    logic clk, rst_n, load, en, up_down;
+    logic [W-1:0] load_val, count, exp;
     int ERR_COUNT = 0;
 
-    enable_register #(.W(W)) DUT (.clk(clk), .rst_n(rst_n), .en(en), .d(d), .q(q));
+    updown_counter #(.W(W)) DUT (.clk(clk), .rst_n(rst_n), .load(load),
+        .load_val(load_val), .en(en), .up_down(up_down), .count(count));
 
     initial begin clk = 0; forever #5 clk = ~clk; end
 
     always_ff @(posedge clk or negedge rst_n)
-        if (!rst_n) exp <= '0; else if (en) exp <= d;
+        if (!rst_n)    exp <= '0;
+        else if (load) exp <= load_val;
+        else if (en)   exp <= up_down ? exp + 1'b1 : exp - 1'b1;
 
     always @(posedge clk) begin
         #1;
-        if (q !== exp) begin ERR_COUNT++; $error("%0tns q=%h exp=%h", $time, q, exp); end
+        if (count !== exp) begin ERR_COUNT++; $error("%0tns count=%0d exp=%0d", $time, count, exp); end
     end
 
     initial begin
-        rst_n = 0; en = 0; d = 0;
+        rst_n = 0; load = 0; en = 0; up_down = 1; load_val = 0;
         repeat(3) @(negedge clk);
         rst_n = 1;
-        for (int i = 0; i < 50; i++) begin d = $random; en = $random; @(negedge clk); end
+        for (int i = 0; i < 80; i++) begin
+            load = ($random % 8 == 0); load_val = $random;
+            en = $random; up_down = $random;
+            @(negedge clk);
+        end
         repeat(2) @(posedge clk);
         check_result;
     end

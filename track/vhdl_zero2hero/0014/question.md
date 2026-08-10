@@ -1,43 +1,57 @@
-# 2-to-4 Decoder (with enable)
+# VHDL types (enumerated opcode & ALU)
 
-**Difficulty:** ⭐⭐ · **Topics:** one-hot, `to_integer`
+**Difficulty:** ⭐⭐⭐ · **Topics:** enumerated `type`, `'val`, `case`, `numeric_std`
 
 ## Background
-A **decoder** turns an N-bit code into a **one-hot** output — exactly one line
-high. An **enable** gates it off entirely. Indexing a vector by an integer
-(`y(to_integer(unsigned(code)))`) is a compact way to set the selected bit.
+An **ALU** does one of several operations chosen by an opcode. Rather than switch
+on raw numbers, define an **enumerated type** (`type op_t is (OP_ADD, ...)`) for
+readable names. The opcode arrives as a `std_logic_vector`, so convert it with
+`op_t'val(to_integer(unsigned(op)))` — the `'val` attribute maps an integer
+position to the matching enum value. Arithmetic uses `unsigned` from
+`ieee.numeric_std`.
 
 ## The task
-When `en='1'`, assert the `y` bit chosen by `code`; else all zero. (`in` is
-reserved, so the code is named `code`.)
+8-bit ALU with a `zero` flag.
+
+| op | name | y |
+|----|------|---|
+| 0 | ADD | a + b |
+| 1 | SUB | a - b |
+| 2 | AND | a and b |
+| 3 | OR  | a or b |
+| 4 | XOR | a xor b |
+| 5 | SLL | a shifted left by b(2:0) |
+| 6 | SRL | a shifted right by b(2:0) |
+| 7 | SLT | 1 if a < b (unsigned) else 0 |
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `code` | in  | std_logic_vector(1 downto 0) | binary code |
-| `en`   | in  | std_logic | enable |
-| `y`    | out | std_logic_vector(3 downto 0) | one-hot |
+| `a`, `b` | in  | std_logic_vector(W-1 downto 0) | operands |
+| `op`     | in  | std_logic_vector(2 downto 0)   | opcode |
+| `y`      | out | std_logic_vector(W-1 downto 0) | result |
+| `zero`   | out | std_logic | result = 0 |
+
+**Generic:** `W` (default 8)
 
 ## How to approach it
 ```vhdl
-process(all)
-begin
-    y <= (others => '0');
-    if en = '1' then
-        y(to_integer(unsigned(code))) <= '1';
-    end if;
-end process;
+type op_t is (OP_ADD, OP_SUB, OP_AND, OP_OR, OP_XOR, OP_SLL, OP_SRL, OP_SLT);
+...
+case op_t'val(to_integer(unsigned(op))) is
+    when OP_ADD => ys := std_logic_vector(unsigned(a) + unsigned(b));
+    when OP_SLL => ys := std_logic_vector(shift_left(unsigned(a), sh));
+    -- ...
+end case;
 ```
+Use `shift_left`/`shift_right` (numeric_std) for the shifts and derive `zero`
+from the result.
 
 ## Common mistakes
-- Not clearing `y` first (leaves a latch / stale bits).
-- Forgetting `use ieee.numeric_std.all;` for `unsigned`/`to_integer`.
+- Forgetting `use ieee.numeric_std.all;`.
+- Trying to do arithmetic directly on `std_logic_vector` — cast to `unsigned`
+  first.
 
 ## VHDL notes
-`numeric_std` provides the numeric interpretations of vectors; converting through
-`unsigned` then `to_integer` is the standard idiom for a dynamic index.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0014/solution.vhdl 0014/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+`op_t'val(n)` is the inverse of `op_t'pos(v)`. Enumerated states/opcodes show up
+by name in the waveform.

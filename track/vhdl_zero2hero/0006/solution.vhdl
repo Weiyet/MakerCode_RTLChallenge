@@ -1,18 +1,19 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity reduction_ops is
-  port (
-    d        : in  std_logic_vector(7 downto 0);
-    all_ones : out std_logic;
-    any_one  : out std_logic;
-    parity   : out std_logic
-  );
-end entity reduction_ops;
+entity reverser is
+  port (d       : in  std_logic_vector(31 downto 0);
+        bitrev  : out std_logic_vector(31 downto 0);
+        byterev : out std_logic_vector(31 downto 0));
+end entity reverser;
 
-architecture rtl of reduction_ops is
+architecture rtl of reverser is
 begin
-  all_ones <= and d;   -- VHDL-2008 reduction
-  any_one  <= or d;
-  parity   <= xor d;
+  process(all) begin
+    for i in 0 to 31 loop
+      bitrev(i) <= d(31 - i);
+    end loop;
+  end process;
+
+  byterev <= d(7 downto 0) & d(15 downto 8) & d(23 downto 16) & d(31 downto 24);
 end architecture rtl;

@@ -1,47 +1,36 @@
-# Vector split
+# Vectors (concatenation & replication)
 
-**Difficulty:** ⭐ · **Topics:** `std_logic_vector`, slicing with `downto`
+**Difficulty:** ⭐⭐ · **Topics:** `&` concatenation
 
 ## Background
-A **vector** bundles wires into one multi-bit signal: `std_logic_vector(15 downto 0)`
-is 16 bits, index 15 (MSB) down to 0 (LSB). A **slice** `d(hi downto lo)` grabs a
-contiguous field — the everyday way to break a word into parts (e.g. an address
-into tag/index/offset).
+The `&` operator joins vectors into a wider one, most-significant part on the
+left. VHDL has **no** `{N{x}}` replication shortcut, so you either write the copies
+out (`a & a & a & a`) or use an aggregate. Rearranging and padding buses like this
+is pure wiring — no gates.
 
 ## The task
-Split a 16-bit word into upper and lower bytes.
+From bytes `a`, `b` build `cat = a & b`, `rep4` = four copies of `a`, and
+`nib_swap` = `a` with its nibbles swapped.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `d`  | in  | std_logic_vector(15 downto 0) | packed word |
-| `hi` | out | std_logic_vector(7 downto 0)  | `d(15 downto 8)` |
-| `lo` | out | std_logic_vector(7 downto 0)  | `d(7 downto 0)` |
-
-```mermaid
-graph LR
-    d["d(15:0)"] --> hi["hi = d(15 downto 8)"]
-    d --> lo["lo = d(7 downto 0)"]
-```
+| `a`, `b`   | in  | std_logic_vector(7 downto 0)  | operands |
+| `cat`      | out | std_logic_vector(15 downto 0) | `a & b` |
+| `rep4`     | out | std_logic_vector(31 downto 0) | 4 copies of `a` |
+| `nib_swap` | out | std_logic_vector(7 downto 0)  | nibble swap |
 
 ## How to approach it
 ```vhdl
-hi <= d(15 downto 8);
-lo <= d(7 downto 0);
+cat      <= a & b;
+rep4     <= a & a & a & a;
+nib_swap <= a(3 downto 0) & a(7 downto 4);
 ```
 
 ## Common mistakes
-- Using `to` instead of `downto` (must match the declaration's direction).
-- Width mismatch: an 8-bit port needs an 8-bit slice.
+- Order: the **leftmost** operand of `&` lands in the MSBs.
+- Total width must equal the target width.
 
 ## VHDL notes
-Slice direction must follow the signal's declared direction. `downto` is the usual
-convention for numeric vectors.
-
-## Run it (GHDL)
-```bash
-# from track/vhdl_zero2hero/
-ghdl -a --std=08 0005/solution.vhdl 0005/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
-A correct run prints `Test PASS`. Swap `solution.vhdl` for `interface.vhdl` to test
-your own answer.
+Concatenation composes for sign-extension too:
+`( (7 downto 0 => v(7)) ) & v` extends an 8-bit `v` to 16 bits.

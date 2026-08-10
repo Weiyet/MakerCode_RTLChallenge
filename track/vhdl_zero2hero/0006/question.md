@@ -1,43 +1,32 @@
-# Reduction operators
+# Vectors (arrays & bit/byte reverse)
 
-**Difficulty:** ⭐⭐ · **Topics:** VHDL-2008 unary reduction
+**Difficulty:** ⭐⭐ · **Topics:** `for` loop in a process, byte lanes
 
 ## Background
-A **reduction** folds a whole vector into one bit. **VHDL-2008** added unary
-operators for this: `and d`, `or d`, `xor d` each return a single `std_logic`.
-(Before 2008 you wrote a loop.) This is distinct from the *binary* operators of
-problem 0003, which combine two vectors lane-by-lane.
+Two everyday manipulations: **bit reverse** (flip bit order via a `for` loop) and
+**byte reverse** (swap byte lanes, i.e. endianness), both combinational.
 
 ## The task
-`all_ones = and d`, `any_one = or d`, `parity = xor d` for an 8-bit input.
+For a 32-bit input `d`: `bitrev` = bits of `d` reversed; `byterev` = the 4 bytes
+of `d` reversed.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `d`        | in  | std_logic_vector(7 downto 0) | data |
-| `all_ones` | out | std_logic | `and d` |
-| `any_one`  | out | std_logic | `or d` |
-| `parity`   | out | std_logic | `xor d` |
+| `d`       | in  | std_logic_vector(31:0) | data in |
+| `bitrev`  | out | std_logic_vector(31:0) | bit-reversed |
+| `byterev` | out | std_logic_vector(31:0) | byte-lane reversed |
 
 ## How to approach it
 ```vhdl
-all_ones <= and d;
-any_one  <= or d;
-parity   <= xor d;
-```
+process(all) begin
+  for i in 0 to 31 loop
+    bitrev(i) <= d(31 - i);
+  end loop;
+end process;
 
-## Common mistakes
-- Compiling without `--std=08` — the unary reduction operators are a 2008 feature.
-- Confusing `d and d` (binary, 8 bits) with `and d` (reduction, 1 bit).
+byterev <= d(7 downto 0) & d(15 downto 8) & d(23 downto 16) & d(31 downto 24);
+```
 
 ## VHDL notes
-`xor d` gives the parity (1 when an odd number of bits are set). Pre-2008 code
-uses a `for` loop over the bits instead.
-
-## Run it (GHDL)
-```bash
-# from track/vhdl_zero2hero/
-ghdl -a --std=08 0006/solution.vhdl 0006/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
-A correct run prints `Test PASS`. Swap `solution.vhdl` for `interface.vhdl` to test
-your own answer.
+`&` concatenates; slices use `downto`. The loop variable `i` is implicitly declared.

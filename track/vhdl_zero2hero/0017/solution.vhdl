@@ -1,43 +1,34 @@
 library ieee;
 use ieee.std_logic_1164.all;
-use ieee.numeric_std.all;
 
-entity alu is
+entity gray_codec is
   generic (
-    W : integer := 8
+    W : integer := 4
   );
   port (
-    a    : in  std_logic_vector(W-1 downto 0);
-    b    : in  std_logic_vector(W-1 downto 0);
-    op   : in  std_logic_vector(2 downto 0);
-    y    : out std_logic_vector(W-1 downto 0);
-    zero : out std_logic
+    bin     : in  std_logic_vector(W-1 downto 0);
+    gray_in : in  std_logic_vector(W-1 downto 0);
+    gray    : out std_logic_vector(W-1 downto 0);
+    bin_out : out std_logic_vector(W-1 downto 0)
   );
-end entity alu;
+end entity gray_codec;
 
-architecture rtl of alu is
-  type op_t is (OP_ADD, OP_SUB, OP_AND, OP_OR, OP_XOR, OP_SLL, OP_SRL, OP_SLT);
-begin
-  process(all)
-    variable ys  : std_logic_vector(W-1 downto 0);
-    variable sh  : integer;
+architecture rtl of gray_codec is
+  function bin2gray(b : std_logic_vector) return std_logic_vector is
   begin
-    sh := to_integer(unsigned(b(2 downto 0)));
-    case op_t'val(to_integer(unsigned(op))) is
-      when OP_ADD => ys := std_logic_vector(unsigned(a) + unsigned(b));
-      when OP_SUB => ys := std_logic_vector(unsigned(a) - unsigned(b));
-      when OP_AND => ys := a and b;
-      when OP_OR  => ys := a or b;
-      when OP_XOR => ys := a xor b;
-      when OP_SLL => ys := std_logic_vector(shift_left(unsigned(a), sh));
-      when OP_SRL => ys := std_logic_vector(shift_right(unsigned(a), sh));
-      when OP_SLT => if unsigned(a) < unsigned(b) then
-                       ys := std_logic_vector(to_unsigned(1, W));
-                     else
-                       ys := (others => '0');
-                     end if;
-    end case;
-    y <= ys;
-    if unsigned(ys) = 0 then zero <= '1'; else zero <= '0'; end if;
-  end process;
+    return b xor ('0' & b(b'high downto 1));
+  end function;
+
+  function gray2bin(g : std_logic_vector) return std_logic_vector is
+    variable b : std_logic_vector(g'range);
+  begin
+    b(b'high) := g(g'high);
+    for i in g'high-1 downto 0 loop
+      b(i) := b(i+1) xor g(i);
+    end loop;
+    return b;
+  end function;
+begin
+  gray    <= bin2gray(bin);
+  bin_out <= gray2bin(gray_in);
 end architecture rtl;

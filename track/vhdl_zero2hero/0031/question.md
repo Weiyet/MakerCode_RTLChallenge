@@ -1,4 +1,4 @@
-# UART transmitter (hero)
+# Finite state machine (UART transmitter, hero)
 
 **Difficulty:** ⭐⭐⭐⭐⭐ · **Topics:** FSM + datapath, serialization, timing
 
@@ -58,11 +58,3 @@ stateDiagram-v2
 `tb.vhdl` acts as a **UART receiver**: it waits for the start bit, samples each
 bit at mid-period (every `CLKS_PER_BIT` clocks), rebuilds the byte, and checks it
 matches — plus valid start/stop framing.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0031/solution.vhdl 0031/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
-
-Finishing this means you have combined essentially every core building block in
-the track into one design. Well done.

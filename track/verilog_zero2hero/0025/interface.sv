@@ -1,14 +1,13 @@
-module updown_counter #(
-    parameter int W = 8
-) (
-    input  logic         clk,
-    input  logic         rst_n,
-    input  logic         load,
-    input  logic [W-1:0] load_val,
-    input  logic         en,
-    input  logic         up_down,
-    output logic [W-1:0] count
+module ram #(
+    parameter int AW = 4,
+    parameter int DW = 8
+)(
+    input  logic          clk,
+    input  logic          we,
+    input  logic [AW-1:0] addr,
+    input  logic [DW-1:0] wdata,
+    output logic [DW-1:0] rdata
 );
-    // your implementation here
+    // declare a 2-D array and drive rdata with a registered read
 
 endmodule

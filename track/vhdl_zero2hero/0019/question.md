@@ -1,46 +1,49 @@
-# Population count (generic)
+# Sequential logic (reset styles)
 
-**Difficulty:** ⭐⭐⭐ · **Topics:** `generic`, `math_real` sizing, loop accumulate
+**Difficulty:** ⭐⭐⭐ · **Topics:** reset, sensitivity lists
 
 ## Background
-"Popcount" = number of set bits. Counting `WIDTH` bits gives 0..WIDTH, needing
-`ceil(log2(WIDTH+1))` output bits. VHDL has no `$clog2`, so size the port with
-`integer(ceil(log2(real(WIDTH+1))))` from `ieee.math_real`. Inside, accumulate
-into an `integer` and convert back.
+Registers need a defined start value from **reset**. Two styles differ in *when*
+reset acts:
+- **Synchronous**: reset only checked at a clock edge; process is sensitive to
+  `clk` only.
+- **Asynchronous**: reset acts immediately; process is sensitive to `clk` **and**
+  `rst_n`, and the reset is tested *before* `rising_edge`.
+
+`rst_n` is active-low (`_n`): reset when 0.
 
 ## The task
-Return the number of 1s in a `WIDTH`-bit input.
+Produce `q_sync` (sync reset) and `q_async` (async reset) copies of `d`.
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `d`     | in  | std_logic_vector(WIDTH-1 downto 0) | data |
-| `count` | out | std_logic_vector(ceil(log2(WIDTH+1))-1 downto 0) | number of 1s |
-
-**Generic:** `WIDTH` (default 8)
+| `clk`, `rst_n` | in | std_logic | clock / active-low reset |
+| `d`       | in  | std_logic | data |
+| `q_sync`  | out | std_logic | sync-reset register |
+| `q_async` | out | std_logic | async-reset register |
 
 ## How to approach it
 ```vhdl
-process(all)
-    variable c : integer;
+process(clk)                       -- synchronous
 begin
-    c := 0;
-    for i in d'range loop
-        if d(i) = '1' then c := c + 1; end if;
-    end loop;
-    count <= std_logic_vector(to_unsigned(c, count'length));
+    if rising_edge(clk) then
+        if rst_n = '0' then q_sync <= '0'; else q_sync <= d; end if;
+    end if;
+end process;
+
+process(clk, rst_n)                -- asynchronous
+begin
+    if rst_n = '0' then q_async <= '0';
+    elsif rising_edge(clk) then q_async <= d;
+    end if;
 end process;
 ```
 
 ## Common mistakes
-- Under-sizing `count` (miss the all-ones = WIDTH case).
-- Forgetting `use ieee.math_real.all;` for `ceil`/`log2`.
+- Wrong sensitivity list for the chosen style.
+- Testing `rising_edge` *before* the async reset — the reset check must come first.
 
 ## VHDL notes
-`count'length` gives the port width, so `to_unsigned(c, count'length)` always
-matches — no magic numbers.
-
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0019/solution.vhdl 0019/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+Choose one reset style per project. The two pure forms here isolate the essential
+difference.

@@ -1,33 +1,41 @@
-ID,Title,Module,Difficulty,Topics
-0000,Wire,M1 Gates & wires,1,"entity/architecture, signal, concurrent assignment"
-0001,Constants,M1 Gates & wires,1,"literals, constant drivers"
-0002,Inverter (NOT),M1 Gates & wires,1,logical not
-0003,Basic logic gates,M1 Gates & wires,1,"logical operators, multiple outputs"
-0004,2-to-1 Multiplexer,M1 Gates & wires,2,conditional signal assignment
-0005,Vector split,M2 Vectors & types,1,"std_logic_vector, slicing with downto"
-0006,Reduction operators,M2 Vectors & types,2,VHDL-2008 unary reduction
-0007,Concatenation & replication,M2 Vectors & types,2,& concatenation
-0008,Vector reverse,M2 Vectors & types,2,"process, for loop"
-0009,Byte reverse (array type),M2 Vectors & types,2,"array type, byte addressing"
-0010,Half adder,M3 Combinational blocks,1,"xor/and, arithmetic from gates"
-0011,Full adder,M3 Combinational blocks,2,carry logic
-0012,Ripple-carry adder (for-generate),M3 Combinational blocks,3,"generic, for...generate"
-0013,4-to-1 Multiplexer,M3 Combinational blocks,2,"process, case, generic width"
-0014,2-to-4 Decoder (with enable),M3 Combinational blocks,2,"one-hot, to_integer"
-0015,Priority encoder,M3 Combinational blocks,3,priority via if/elsif
-0016,BCD to 7-segment,M3 Combinational blocks,3,"case, look-up"
-0017,ALU with an enumerated opcode,M4 Language features,3,"enumerated type, 'val, numeric_std"
-0018,Records (grouping fields),M4 Language features,3,"record type, concatenation"
-0019,Population count (generic),M4 Language features,3,"generic, math_real sizing"
-0020,Gray / binary codec (functions),M4 Language features,3,"function, reuse"
-0021,D flip-flop,M5 Sequential,2,"clocked process, rising_edge"
-0022,Reset styles: synchronous vs asynchronous,M5 Sequential,3,"reset, sensitivity lists"
-0023,Enabled register (load enable),M5 Sequential,2,"clock enable, hold"
-0024,Shift register (SIPO),M5 Sequential,2,"shifting, &"
-0025,Up/down counter with load,M5 Sequential,3,"counters, priority, unsigned"
-0026,LFSR (pseudo-random),M5 Sequential,3,"feedback shift register, XOR taps"
-0027,Edge detector (one-pulse),M6 FSM & hero,3,"registering history, one-cycle pulse"
-0028,"Sequence detector ""1011"" (Moore FSM)",M6 FSM & hero,4,"enumerated state type, Moore output"
-0029,"Mealy detector ""11""",M6 FSM & hero,3,Mealy vs Moore
-0030,Switch debouncer,M6 FSM & hero,4,"counter + condition, glitch rejection"
-0031,UART transmitter (hero),M6 FSM & hero,5,"FSM + datapath, serialization, timing"
+ID,Title,Difficulty,Topics
+0000,"Combinational logic (wires, assign & constants)",1,"entity/architecture, concurrent assignment, constants"
+0001,Combinational logic (basic gates incl. NOT),1,"logical operators, multiple outputs"
+0002,Combinational logic (2-to-1 multiplexer),2,conditional signal assignment
+0003,Vectors (slicing with downto),1,"std_logic_vector, slicing with downto"
+0004,Vectors (reduction operators),2,VHDL-2008 unary reduction
+0005,Vectors (concatenation & replication),2,& concatenation
+0006,Vectors (arrays & bit/byte reverse),2,"for loop, byte lanes, endianness"
+0007,Combinational logic (half & full adder),2,"carry logic, arithmetic from gates"
+0008,"Combinational logic (ripple-carry adder, for-generate)",3,"generic, for...generate"
+0009,"Combinational logic (4-to-1 multiplexer, case)",2,"process, case, generic width"
+0010,Combinational logic (2-to-4 decoder),2,"one-hot, to_integer"
+0011,Combinational logic (priority encoder),3,priority via if/elsif
+0012,Combinational logic (avoiding inferred latches),3,"process completeness, default assignment"
+0013,Combinational logic (tri-state / output-enable),3,"high-impedance 'Z', buses, output enable"
+0014,VHDL types (enumerated opcode & ALU),3,"enumerated type, 'val, numeric_std"
+0015,VHDL types (records),3,"record type, concatenation"
+0016,Parameters (generic population count),3,"generic, math_real sizing"
+0017,Subprograms (functions),3,"function, reuse"
+0018,Sequential logic (D flip-flop),2,"clocked process, rising_edge"
+0019,Sequential logic (reset styles),3,"reset, sensitivity lists"
+0020,Sequential logic (enable & load),2,"clock enable, hold"
+0021,Sequential logic (signal vs variable),3,"<= vs :=, scheduling"
+0022,Sequential logic (shift register),2,"shifting, &"
+0023,Sequential logic (up/down counter),3,"counters, priority, unsigned"
+0024,Sequential logic (LFSR),3,"feedback shift register, XOR taps"
+0025,Sequential logic (memory / register file),3,"array type, synchronous write, registered read"
+0026,Finite state machine (edge detector),3,"registering history, one-cycle pulse"
+0027,Finite state machine (Moore sequence detector),4,"enumerated state type, Moore output"
+0028,Finite state machine (Mealy detector),3,Mealy vs Moore
+0029,Finite state machine (switch debouncer),4,"counter + condition, glitch rejection"
+0030,Finite state machine (valid/ready handshake),4,"ready/valid, backpressure, interfaces"
+0031,"Finite state machine (UART transmitter, hero)",5,"FSM + datapath, serialization, timing"
+0032,Component instantiation (by position),2,"component, positional port map"
+0033,Component instantiation (by name),2,named association formal => actual
+0034,Component instantiation (generic map),3,"generic map, parameterized reuse"
+0035,Component instantiation (connecting instances & vectors),3,"wiring instances, vector ports, with-select tap"
+0036,Component instantiation (hierarchical adder),3,"hierarchy, carry chaining, open"
+0037,Component instantiation (adder-subtractor),4,"two's complement, XOR trick, hierarchical reuse"
+0038,Subprograms (functions & procedures),3,"function return, procedure out params"
+0039,Concurrency (concurrent processes),3,"concurrent processes, native parallelism"

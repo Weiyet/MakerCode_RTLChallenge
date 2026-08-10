@@ -1,16 +1,20 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 
-entity mealy_11 is
+entity debouncer is
+  generic (
+    STABLE : integer := 4
+  );
   port (
     clk   : in  std_logic;
     rst_n : in  std_logic;
-    din   : in  std_logic;
-    y     : out std_logic
+    noisy : in  std_logic;
+    clean : out std_logic
   );
-end entity mealy_11;
+end entity debouncer;
 
-architecture rtl of mealy_11 is
+architecture rtl of debouncer is
 begin
   -- your implementation here
 

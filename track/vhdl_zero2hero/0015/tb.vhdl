@@ -5,26 +5,24 @@ use std.env.all;
 
 entity tb is end entity tb;
 architecture sim of tb is
-  signal d     : std_logic_vector(3 downto 0) := "0000";
-  signal pos   : std_logic_vector(1 downto 0);
-  signal valid : std_logic;
+  signal opcode : std_logic_vector(3 downto 0) := (others => '0');
+  signal src, dst : std_logic_vector(2 downto 0) := (others => '0');
+  signal imm : std_logic_vector(5 downto 0) := (others => '0');
+  signal word : std_logic_vector(15 downto 0);
 begin
-  dut : entity work.priority_encoder port map (d => d, pos => pos, valid => valid);
+  dut : entity work.ctrl_pack port map (opcode => opcode, src => src, dst => dst, imm => imm, word => word);
   process
     variable errc : integer := 0;
-    variable exp_pos : std_logic_vector(1 downto 0);
-    variable exp_val : std_logic;
+    variable exp  : std_logic_vector(15 downto 0);
   begin
-    for i in 0 to 15 loop
-      d <= std_logic_vector(to_unsigned(i, 4));
+    for t in 0 to 60 loop
+      opcode <= std_logic_vector(to_unsigned((t*3)  mod 16, 4));
+      src    <= std_logic_vector(to_unsigned((t*5)  mod 8, 3));
+      dst    <= std_logic_vector(to_unsigned((t*7)  mod 8, 3));
+      imm    <= std_logic_vector(to_unsigned((t*11) mod 64, 6));
       wait for 5 ns;
-      exp_val := or d;
-      exp_pos := "00";
-      for k in 0 to 3 loop
-        if d(k) = '1' then exp_pos := std_logic_vector(to_unsigned(k, 2)); end if;
-      end loop;
-      if valid /= exp_val then errc := errc + 1; report "valid wrong" severity error; end if;
-      if exp_val = '1' and pos /= exp_pos then errc := errc + 1; report "pos wrong" severity error; end if;
+      exp := opcode & src & dst & imm;
+      if word /= exp then errc := errc + 1; report "word wrong" severity error; end if;
     end loop;
     if errc = 0 then report "Test PASS" severity note; else report "Test FAILED" severity note; end if;
     finish;

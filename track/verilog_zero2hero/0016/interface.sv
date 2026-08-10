@@ -1,6 +1,8 @@
-module bcd_to_7seg (
-    input  logic [3:0] bcd,
-    output logic [6:0] seg
+module popcount #(
+    parameter int WIDTH = 8
+) (
+    input  logic [WIDTH-1:0]            in,
+    output logic [$clog2(WIDTH+1)-1:0]  count
 );
     // your implementation here
 

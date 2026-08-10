@@ -1,9 +1,7 @@
-module full_adder (
-    input  logic a,
-    input  logic b,
-    input  logic cin,
-    output logic sum,
-    output logic cout
+module priority_encoder (
+    input  logic [3:0] in,
+    output logic [1:0] pos,
+    output logic       valid
 );
     // your implementation here
 

@@ -1,6 +1,10 @@
-module wire_passthrough (
-    input  logic in,
-    output logic out
+module wires_const (
+    input  logic a,
+    output logic y,
+    output logic one,
+    output logic zero
 );
-    assign out = in;
+    assign y    = a;
+    assign one  = 1'b1;
+    assign zero = 1'b0;
 endmodule

@@ -1,25 +1,16 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity logic_gates is
+entity vector_split is
   port (
-    a      : in  std_logic;
-    b      : in  std_logic;
-    y_and  : out std_logic;
-    y_or   : out std_logic;
-    y_xor  : out std_logic;
-    y_nand : out std_logic;
-    y_nor  : out std_logic;
-    y_xnor : out std_logic
+    d  : in  std_logic_vector(15 downto 0);
+    hi : out std_logic_vector(7 downto 0);
+    lo : out std_logic_vector(7 downto 0)
   );
-end entity logic_gates;
+end entity vector_split;
 
-architecture rtl of logic_gates is
+architecture rtl of vector_split is
 begin
-  y_and  <= a and b;
-  y_or   <= a or b;
-  y_xor  <= a xor b;
-  y_nand <= a nand b;
-  y_nor  <= a nor b;
-  y_xnor <= a xnor b;
+  hi <= d(15 downto 8);
+  lo <= d(7 downto 0);
 end architecture rtl;

@@ -1,35 +1,26 @@
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 use std.env.all;
 
-entity tb is
-  generic (W : integer := 8);
-end entity tb;
+entity tb is end entity tb;
 architecture sim of tb is
-  signal d0, d1, d2, d3, y : std_logic_vector(W-1 downto 0) := (others => '0');
-  signal sel : std_logic_vector(1 downto 0) := "00";
+  signal oe : std_logic := '0';
+  signal din, dout : std_logic_vector(7 downto 0) := (others => '0');
+  constant ALLZ : std_logic_vector(7 downto 0) := (others => 'Z');
 begin
-  dut : entity work.mux4to1 generic map (W => W)
-        port map (d0 => d0, d1 => d1, d2 => d2, d3 => d3, sel => sel, y => y);
+  dut : entity work.tristate_buf port map (oe => oe, din => din, dout => dout);
   process
+    variable s1 : positive := 4; variable s2 : positive := 55; variable r : real;
     variable errc : integer := 0;
-    variable exp  : std_logic_vector(W-1 downto 0);
   begin
-    for t in 0 to 39 loop
-      d0 <= std_logic_vector(to_unsigned((t*7)  mod 256, W));
-      d1 <= std_logic_vector(to_unsigned((t*13) mod 256, W));
-      d2 <= std_logic_vector(to_unsigned((t*29) mod 256, W));
-      d3 <= std_logic_vector(to_unsigned((t*53) mod 256, W));
-      sel <= std_logic_vector(to_unsigned(t mod 4, 2));
-      wait for 5 ns;
-      case sel is
-        when "00" => exp := d0;
-        when "01" => exp := d1;
-        when "10" => exp := d2;
-        when others => exp := d3;
-      end case;
-      if y /= exp then errc := errc + 1; report "mux wrong" severity error; end if;
+    for t in 0 to 19 loop
+      uniform(s1, s2, r); din <= std_logic_vector(to_unsigned(integer(r * 255.0), 8));
+      oe <= '1'; wait for 5 ns;
+      if dout /= din  then errc := errc + 1; report "oe=1 dout wrong" severity error; end if;
+      oe <= '0'; wait for 5 ns;
+      if dout /= ALLZ then errc := errc + 1; report "oe=0 dout not high-Z" severity error; end if;
     end loop;
     if errc = 0 then report "Test PASS" severity note; else report "Test FAILED" severity note; end if;
     finish;

@@ -1,71 +1,49 @@
-# Sequence detector "1011" (Moore FSM)
+# Finite state machine (Mealy detector)
 
-**Difficulty:** ⭐⭐⭐⭐ · **Topics:** enum FSM, Moore output, overlapping
+**Difficulty:** ⭐⭐⭐ · **Topics:** Mealy vs Moore
 
 ## Background
-A **finite state machine** remembers "how far along a pattern we are". Each clock
-it consumes one input bit and moves between named states; when it reaches the
-accepting state, it flags a match. This is a **Moore** machine: the output depends
-*only on the current state*, so `detected` is a clean registered signal.
-
-We detect `1011` with **overlap** allowed (so `1011011` fires twice). The trick
-for overlap: from the accepting state, the trailing `1` is also the start of a new
-potential match.
+A **Mealy** machine's output depends on the current state **and** the current
+input, so it can respond a cycle earlier than an equivalent Moore machine — at the
+cost of being combinational (and thus able to glitch). Comparing this "two 1s in a
+row" detector with the Moore machine in problem 0028 is the clearest way to feel
+the difference.
 
 ## The task
-Assert `detected` for one cycle whenever the last four serial bits equal `1011`.
+Assert `y` in the *same* cycle when the current and previous `din` are both 1
+(overlapping).
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
 | `clk`, `rst_n` | input | 1 | clock / async reset |
-| `din`      | input  | 1 | serial data |
-| `detected` | output | 1 | pattern seen |
+| `din` | input  | 1 | serial data |
+| `y`   | output | 1 | Mealy output (combinational) |
 
 ```mermaid
 stateDiagram-v2
     [*] --> S0
-    S0 --> S1: 1
-    S0 --> S0: 0
-    S1 --> S1: 1
-    S1 --> S2: 0
-    S2 --> S3: 1
-    S2 --> S0: 0
-    S3 --> S4: 1
-    S3 --> S2: 0
-    S4 --> S1: 1
-    S4 --> S2: 0
-    note right of S4: detected = 1
+    S0 --> S1: din=1 / y=0
+    S0 --> S0: din=0 / y=0
+    S1 --> S1: din=1 / y=1
+    S1 --> S0: din=0 / y=0
 ```
 
 ## How to approach it
-1. Name the states (got-nothing, got-`1`, got-`10`, got-`101`, got-`1011`) with an
-   `enum`.
-2. Register the state in `always_ff` using a `case`.
-3. Drive `detected = (state == S4)` combinationally (Moore).
+One state bit is enough — "was the previous bit a 1?".
 ```systemverilog
-typedef enum logic [2:0] {S0,S1,S2,S3,S4} state_e;
+typedef enum logic {S0, S1} state_e;
 state_e state;
 always_ff @(posedge clk or negedge rst_n)
     if (!rst_n) state <= S0;
-    else case (state)
-        S0: state <= din ? S1 : S0;
-        // ...
-        S4: state <= din ? S1 : S2;   // overlap
-    endcase
-assign detected = (state == S4);
+    else        state <= din ? S1 : S0;
+assign y = (state == S1) & din;   // reacts to din immediately (Mealy)
 ```
 
 ## Common mistakes
-- Wrong overlap transitions from the accepting state (drop them and `1011011`
-  only fires once).
-- Making it Mealy by accident (`detected` depending on `din`).
+- Registering `y` — that would make it Moore (one cycle late).
+- Forgetting the `& din`, which is the "current input" half of a Mealy output.
 
 ## SystemVerilog notes
-An `enum` for states makes the waveform readable (`S3` instead of `3'd3`) and lets
-the tool catch illegal assignments.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0028/tb.sv 0028/solution.sv && vvp sim
-```
+Because Mealy outputs are combinational, be careful when they feed other logic —
+they can glitch mid-cycle. Register them if a downstream block needs a clean pulse.

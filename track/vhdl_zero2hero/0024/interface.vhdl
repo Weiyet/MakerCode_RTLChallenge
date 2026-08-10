@@ -1,19 +1,16 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity shift_register is
-  generic (
-    W : integer := 8
-  );
+entity lfsr8 is
   port (
     clk   : in  std_logic;
     rst_n : in  std_logic;
-    sin   : in  std_logic;
-    q     : out std_logic_vector(W-1 downto 0)
+    en    : in  std_logic;
+    q     : out std_logic_vector(7 downto 0)
   );
-end entity shift_register;
+end entity lfsr8;
 
-architecture rtl of shift_register is
+architecture rtl of lfsr8 is
 begin
   -- your implementation here
 

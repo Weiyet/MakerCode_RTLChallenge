@@ -1,42 +1,54 @@
-# Full adder
+# Combinational logic (priority encoder, casez)
 
-**Difficulty:** ⭐⭐ · **Topics:** carry logic
+**Difficulty:** ⭐⭐⭐ · **Topics:** `casez`, don't-cares, priority
 
 ## Background
-A **full adder** adds three bits: `a`, `b`, and a carry-in `cin`. This is the
-cell you chain together to build any-width adders (each stage's `cout` feeds the
-next stage's `cin`). The result is again `{cout, sum}`:
-- `sum  = a ^ b ^ cin` — parity of the three inputs.
-- `cout = 1` when **two or more** inputs are 1 (the majority function).
+An **encoder** reports *which* input is active. A **priority** encoder handles the
+case where several inputs are active at once by picking the highest-priority one
+(here, the highest-numbered set bit). It also needs a `valid` flag for "nothing
+set". `casez` makes this elegant: `?` (or `z`) bits in a case *item* are
+wildcards, so `4'b1???` matches any input whose MSB is 1 — the higher branches
+naturally win because `case` checks items top to bottom.
 
 ## The task
-`{cout, sum} = a + b + cin`.
+Report the index of the highest set bit of a 4-bit input; `valid=0` when no bit
+is set.
 
 ## Interface
 | Port | Dir | Width | Description |
 |------|-----|-------|-------------|
-| `a`, `b`, `cin` | input  | 1 | operands + carry in |
-| `sum`  | output | 1 | sum bit |
-| `cout` | output | 1 | carry out |
+| `in`    | input  | 4 | request bits |
+| `pos`   | output | 2 | index of highest set bit |
+| `valid` | output | 1 | 1 if any bit set |
+
+## Behaviour
+| in    | valid | pos |
+|-------|-------|-----|
+| 1xxx  | 1 | 3 |
+| 01xx  | 1 | 2 |
+| 001x  | 1 | 1 |
+| 0001  | 1 | 0 |
+| 0000  | 0 | 0 |
 
 ## How to approach it
 ```systemverilog
-assign sum  = a ^ b ^ cin;
-assign cout = (a & b) | (a & cin) | (b & cin);
+always_comb begin
+    valid = 1'b1;
+    casez (in)
+        4'b1???: pos = 2'd3;
+        4'b01??: pos = 2'd2;
+        4'b001?: pos = 2'd1;
+        4'b0001: pos = 2'd0;
+        default: begin pos = 2'd0; valid = 1'b0; end
+    endcase
+end
 ```
-
-## Worked example
-`a=1, b=1, cin=1` → three 1s → `sum=1`, `cout=1` (i.e. binary 11 = 3).
 
 ## Common mistakes
-- Writing `cout = a & b & cin` (only true when *all three* are 1). The carry needs
-  the **majority** (any two), hence the three ORed AND terms.
+- Using `casex` instead of `casez`: `casex` also wild-cards `x`/`z` on the *input*
+  side, which can mask real bugs. Prefer `casez`.
+- Forgetting the `default` (the all-zero case) so `valid` is undefined.
 
 ## SystemVerilog notes
-You will rarely hand-write wide adders — `a + b` infers one. The point here is to
-understand the cell so the generate-based ripple adder (0012) makes sense.
-
-## Run it
-```bash
-iverilog -g2012 -s tb -o sim 0011/tb.sv 0011/solution.sv && vvp sim
-```
+Order matters in `casez` when items overlap — the first match wins, which is
+exactly how priority is expressed here.

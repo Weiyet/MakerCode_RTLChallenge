@@ -1,17 +1,16 @@
 library ieee;
 use ieee.std_logic_1164.all;
 
-entity edge_detector is
+entity seq_detector_1011 is
   port (
-    clk   : in  std_logic;
-    rst_n : in  std_logic;
-    sig   : in  std_logic;
-    rise  : out std_logic;
-    fall  : out std_logic
+    clk      : in  std_logic;
+    rst_n    : in  std_logic;
+    din      : in  std_logic;
+    detected : out std_logic
   );
-end entity edge_detector;
+end entity seq_detector_1011;
 
-architecture rtl of edge_detector is
+architecture rtl of seq_detector_1011 is
 begin
   -- your implementation here
 

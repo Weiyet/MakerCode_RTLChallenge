@@ -1,25 +1,30 @@
 library ieee;
 use ieee.std_logic_1164.all;
+use ieee.numeric_std.all;
 use std.env.all;
 
 entity tb is
 end entity tb;
 
 architecture sim of tb is
-  signal a, y : std_logic := '0';
+  signal a, b, sel, y : std_logic := '0';
 begin
-  dut : entity work.not_gate port map (a => a, y => y);
+  dut : entity work.mux2to1 port map (a => a, b => b, sel => sel, y => y);
 
   process
     variable errc : integer := 0;
-    constant vals : std_logic_vector(0 to 1) := "01";
+    variable v    : unsigned(2 downto 0);
+    variable exp  : std_logic;
   begin
-    for i in vals'range loop
-      a <= vals(i);
+    for i in 0 to 7 loop
+      v := to_unsigned(i, 3);
+      a <= v(2); b <= v(1); sel <= v(0);
       wait for 5 ns;
-      if y /= (not a) then
+      if sel = '1' then exp := b; else exp := a; end if;
+      if y /= exp then
         errc := errc + 1;
-        report "mismatch: a=" & std_logic'image(a) & " y=" & std_logic'image(y) severity error;
+        report "mismatch a=" & std_logic'image(a) & " b=" & std_logic'image(b) &
+               " sel=" & std_logic'image(sel) & " y=" & std_logic'image(y) severity error;
       end if;
     end loop;
     if errc = 0 then report "Test PASS" severity note;

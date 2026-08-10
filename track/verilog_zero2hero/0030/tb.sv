@@ -1,42 +1,31 @@
 `timescale 1ns/1ps
-module tb #(parameter int STABLE = 4);
-    localparam TB_SIM_TIMEOUT = 200000;
-    localparam int CW = (STABLE <= 1) ? 1 : $clog2(STABLE);
-    logic clk, rst_n, noisy, clean;
-    logic clean_e;
-    logic [CW-1:0] cnt_e;
+module tb;
+    localparam TB_SIM_TIMEOUT = 100000;
+    logic clk = 0, rst_n, ready;
+    logic valid;
+    logic [7:0] data;
+    logic [7:0] expect_next = 0;
     int ERR_COUNT = 0;
-
-    debouncer #(.STABLE(STABLE)) DUT (.clk(clk), .rst_n(rst_n), .noisy(noisy), .clean(clean));
-
-    initial begin clk = 0; forever #5 clk = ~clk; end
-
-    always_ff @(posedge clk or negedge rst_n)
-        if (!rst_n) begin clean_e <= 1'b0; cnt_e <= '0; end
-        else if (noisy != clean_e) begin
-            if (cnt_e == STABLE-1) begin clean_e <= noisy; cnt_e <= '0; end
-            else cnt_e <= cnt_e + 1'b1;
-        end else cnt_e <= '0;
-
+    int got = 0;
+    seq_src DUT (.clk(clk), .rst_n(rst_n), .ready(ready), .valid(valid), .data(data));
+    always #5 clk = ~clk;
+    // consumer: on every accepted beat, the value must be the next in sequence
     always @(posedge clk) begin
-        #1;
-        if (clean !== clean_e) begin ERR_COUNT++; $error("%0tns clean=%b exp=%b", $time, clean, clean_e); end
-    end
-
-    initial begin
-        rst_n = 0; noisy = 0;
-        repeat(3) @(negedge clk);
-        rst_n = 1;
-        // bursts of bounce then stable stretches
-        for (int i = 0; i < 200; i++) begin
-            if (i % 20 < 6) noisy = $random;   // bounce
-            else            noisy = (i % 40 < 20);  // stable level
-            @(negedge clk);
+        if (rst_n && valid && ready) begin
+            if (data !== expect_next) begin ERR_COUNT++; $error("beat data=%0d exp=%0d", data, expect_next); end
+            expect_next <= expect_next + 8'd1;
+            got <= got + 1;
         end
-        repeat(2) @(posedge clk);
+    end
+    initial begin
+        rst_n = 0; ready = 0;
+        repeat (2) @(negedge clk);
+        rst_n = 1;
+        // apply bursty backpressure via random ready
+        for (int i = 0; i < 300; i++) begin ready = $random; @(negedge clk); end
+        if (got < 20) begin ERR_COUNT++; $error("too few beats accepted: %0d", got); end
         check_result;
     end
-
     task check_result;
     begin
         if (ERR_COUNT > 0) $display("Test failed with %0d errors.", ERR_COUNT);
@@ -44,7 +33,6 @@ module tb #(parameter int STABLE = 4);
         $finish;
     end
     endtask
-
     string filename;
     initial begin
         if ($value$plusargs("VCDFILE=%s", filename)) begin

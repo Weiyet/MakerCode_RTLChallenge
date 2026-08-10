@@ -1,42 +1,38 @@
-# Half adder
+# Combinational logic (2-to-4 decoder)
 
-**Difficulty:** ⭐ · **Topics:** xor/and, arithmetic from gates
+**Difficulty:** ⭐⭐ · **Topics:** one-hot, `to_integer`
 
 ## Background
-Adding two single bits can give 0, 1, or 2, which needs two output bits: a `sum`
-(low bit) and a `cout` (carry). From the truth table, `sum` is 1 when the inputs
-differ (XOR) and `cout` is 1 only when both are 1 (AND). This two-gate cell is the
-**half adder** — the seed of all wider adders.
+A **decoder** turns an N-bit code into a **one-hot** output — exactly one line
+high. An **enable** gates it off entirely. Indexing a vector by an integer
+(`y(to_integer(unsigned(code)))`) is a compact way to set the selected bit.
 
 ## The task
-`sum = a xor b`, `cout = a and b`.
+When `en='1'`, assert the `y` bit chosen by `code`; else all zero. (`in` is
+reserved, so the code is named `code`.)
 
 ## Interface
 | Port | Dir | Type | Description |
 |------|-----|------|-------------|
-| `a`, `b` | in  | std_logic | operands |
-| `sum`    | out | std_logic | `a xor b` |
-| `cout`   | out | std_logic | `a and b` |
-
-## Truth table
-| a | b | cout | sum |
-|---|---|------|-----|
-| 0 | 0 | 0 | 0 |
-| 0 | 1 | 0 | 1 |
-| 1 | 0 | 0 | 1 |
-| 1 | 1 | 1 | 0 |
+| `code` | in  | std_logic_vector(1 downto 0) | binary code |
+| `en`   | in  | std_logic | enable |
+| `y`    | out | std_logic_vector(3 downto 0) | one-hot |
 
 ## How to approach it
 ```vhdl
-sum  <= a xor b;
-cout <= a and b;
+process(all)
+begin
+    y <= (others => '0');
+    if en = '1' then
+        y(to_integer(unsigned(code))) <= '1';
+    end if;
+end process;
 ```
 
 ## Common mistakes
-- Swapping `sum` and `cout`.
-- It is "half" because there is no carry-*in* (that is the full adder).
+- Not clearing `y` first (leaves a latch / stale bits).
+- Forgetting `use ieee.numeric_std.all;` for `unsigned`/`to_integer`.
 
-## Run it (GHDL)
-```bash
-ghdl -a --std=08 0010/solution.vhdl 0010/tb.vhdl && ghdl -e --std=08 tb && ghdl -r --std=08 tb
-```
+## VHDL notes
+`numeric_std` provides the numeric interpretations of vectors; converting through
+`unsigned` then `to_integer` is the standard idiom for a dynamic index.
