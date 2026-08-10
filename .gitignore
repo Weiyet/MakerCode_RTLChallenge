@@ -9,6 +9,20 @@ questions/*/out/
 questions/*/PASS_*
 build/
 
+# zero2hero track sim artifacts (make sim in track/*/)
+track/*/*/sim_*.log
+track/*/*/sim.log
+track/*/*/compile_*.log
+track/*/*/test_*.vcd
+track/*/*/wave.vcd
+track/*/*/sim_*.out
+track/*/*/dut.sv
+track/*/*/dut_gen.sv
+track/*/*/out/
+track/*/*/PASS_*
+track/*/*.cf
+track/*/*/*.cf
+
 # Python / editor cruft
 __pycache__/
 *.pyc

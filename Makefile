@@ -39,9 +39,13 @@ LANGUAGE  ?= SV
 DUT       ?=
 TEST      ?= 1
 
+# Directory holding the NNNN/ problem folders. Override it from a sub-track
+# Makefile (e.g. `QDIR_ROOT := .`) to reuse this Makefile for another folder.
+QDIR_ROOT ?= questions
+
 # Zero-pad to 4 digits; 10# forces base-10 so "010" is not read as octal.
 QID  := $(shell printf '%04d' $$((10#$(QUESTION))) 2>/dev/null)
-QDIR := questions/$(QID)
+QDIR := $(QDIR_ROOT)/$(QID)
 
 .ONESHELL:
 .PHONY: sim wave clean help
