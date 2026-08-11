@@ -39,3 +39,5 @@ ID,Title,Difficulty,Topics
 0037,Component instantiation (adder-subtractor),4,"two's complement, XOR trick, hierarchical reuse"
 0038,Subprograms (functions & procedures),3,"function return, procedure out params"
 0039,Concurrency (concurrent processes),3,"concurrent processes, native parallelism"
+0040,Writing a testbench (clock & reset),3,"clock process, reset stimulus, external names, simulation-only"
+0041,Writing a testbench (stimulus with a procedure),4,"procedure, driving transactions, reuse, simulation-only"

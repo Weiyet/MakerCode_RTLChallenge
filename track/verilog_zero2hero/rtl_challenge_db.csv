@@ -39,3 +39,5 @@ ID,Title,Difficulty,Topics
 0037,Module instantiation (adder-subtractor),4,"two's complement, XOR trick, hierarchical reuse"
 0038,Subprograms (functions & tasks),3,"function return, task outputs, automatic"
 0039,Procedural programming (fork family: join / join_any / join_none),3,"fork/join, concurrency, simulation-only"
+0040,Writing a testbench (clock & reset),3,"initial, clock modelling, reset stimulus, simulation-only"
+0041,Writing a testbench (stimulus with a task),4,"task, driving transactions, reuse, simulation-only"

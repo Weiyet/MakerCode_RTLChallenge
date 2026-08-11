@@ -111,6 +111,16 @@ each `question.md` flags this. Verification knowledge every RTL engineer needs.
 | [0038](0038/) | Functions and tasks | `function` return vs `task` outputs, `automatic` |
 | [0039](0039/) | `fork` family | `join` / `join_any` / `join_none`, parallelism |
 
+### Module 9 — Writing testbenches (simulation)
+Now you write the **testbench**, not the design: the DUT is provided in `tb.sv`
+and wired as `dut` inside your `tb_top`, and an outer checker probes `tb_top.dut.*`
+to confirm you drove it correctly. (Don't call `$finish` — the harness owns it.)
+
+| # | Problem | Focus |
+|---|---------|-------|
+| [0040](0040/) | Clock & reset | `initial`, clock modelling, reset stimulus |
+| [0041](0041/) | Stimulus with a task | a `task` that drives transactions, reuse |
+
 ---
 *Difficulty is marked with ⭐ (getting started) up to ⭐⭐⭐⭐⭐ (hero) inside each
 `question.md`.*

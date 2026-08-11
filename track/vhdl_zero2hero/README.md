@@ -117,6 +117,17 @@ parallel). These problems teach the VHDL equivalents of the Verilog track's M8.
 | [0038](0038/) | Functions and procedures | `function` return vs `procedure` `out` params |
 | [0039](0039/) | Concurrent processes | native parallelism (VHDL's answer to `fork`) |
 
+### Module 9 — Writing testbenches (simulation)
+Now you write the **testbench**, not the design: the DUT is provided in `tb.vhdl`
+and wired as `dut` inside your `tb_top`, and an outer checker probes it via
+VHDL-2008 **external names** (`<< signal .tb.u.dut.… >>`) to confirm you drove it
+correctly. (Don't call `std.env.finish` — the harness owns it.)
+
+| # | Problem | Focus |
+|---|---------|-------|
+| [0040](0040/) | Clock & reset | clock process, `wait`, reset stimulus |
+| [0041](0041/) | Stimulus with a procedure | a `procedure` that drives transactions, reuse |
+
 ---
 *Difficulty is marked with ⭐ (getting started) up to ⭐⭐⭐⭐⭐ (hero) inside each
 `question.md`.*
