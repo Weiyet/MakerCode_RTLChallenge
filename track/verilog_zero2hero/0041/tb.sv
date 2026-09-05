@@ -20,28 +20,28 @@ module tb;
     int   valid_beats = 0;
     logic saw_rst = 0;
 
-    tb_top u ();
+    tb_top DUT ();
 
-    always @(posedge u.dut.clk) begin
+    always @(posedge DUT.dut.clk) begin
         redges++;
-        if (u.dut.rst_n === 1'b1 && u.dut.valid === 1'b1) valid_beats++;
+        if (DUT.dut.rst_n === 1'b1 && DUT.dut.valid === 1'b1) valid_beats++;
     end
-    always @(*) if (u.dut.rst_n === 1'b0) saw_rst = 1'b1;
+    always @(*) if (DUT.dut.rst_n === 1'b0) saw_rst = 1'b1;
 
     initial begin
         #400;
         if (redges < 10)            begin ERR_COUNT++; $error("clock not toggling - model a clock"); end
         if (!saw_rst)               begin ERR_COUNT++; $error("reset never applied"); end
         if (valid_beats != 4)       begin ERR_COUNT++; $error("expected 4 valid transactions, saw %0d (hold valid one clock each)", valid_beats); end
-        if (u.dut.sum !== 16'd100)  begin ERR_COUNT++; $error("accumulator=%0d expected 100 (send 10,20,30,40)", u.dut.sum); end
+        if (DUT.dut.sum !== 16'd100)  begin ERR_COUNT++; $error("accumulator=%0d expected 100 (send 10,20,30,40)", DUT.dut.sum); end
         if (ERR_COUNT > 0) $display("Test failed with %0d errors.", ERR_COUNT);
         else               $display("Test PASS");
         $finish;
     end
-    // waveform dump for `make wave` (whole hierarchy, including u.dut)
+    // waveform dump for `make wave` (whole hierarchy, including DUT.dut)
     string vcdfile;
     initial if ($value$plusargs("VCDFILE=%s", vcdfile)) begin
         $dumpfile(vcdfile); $dumpvars(0, tb);
     end
-    initial begin #(TB_SIM_TIMEOUT) $display("Simulation TIMEOUT"); $finish; end
+    initial begin #(TB_SIM_TIMEOUT) $error("Simulation TIMEOUT"); $finish; end
 endmodule

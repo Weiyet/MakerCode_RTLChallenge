@@ -36,5 +36,5 @@ module tb;
             $dumpfile(filename); $dumpvars(0, DUT);
         end
     end
-    initial begin #(TB_SIM_TIMEOUT) $display("Simulation TIMEOUT"); $finish; end
+    initial begin #(TB_SIM_TIMEOUT) $error("Simulation TIMEOUT"); $finish; end
 endmodule
