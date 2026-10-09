@@ -160,9 +160,12 @@ sim:
 	# passed as -P tb.<name>=<value>. No file (or no rows) -> one default run.
 	iv="$(QDIR)/input_vector.txt"
 	if [ -f "$$iv" ] && [ "$$(sed '1d' "$$iv" | grep -cve '^[[:space:]]*$$')" -gt 0 ]; then
-	  read -ra NAMES <<< "$$(sed -n '1p' "$$iv")"
+	  # Strip CR from Windows line endings before splitting names and values.
+	  header=$$(sed -n '1p' "$$iv"); header=$${header%$$'\r'}
+	  read -ra NAMES <<< "$$header"
 	  n=0
 	  while IFS= read -r row || [ -n "$$row" ]; do
+	    row=$${row%$$'\r'}
 	    [ -z "$${row//[[:space:]]/}" ] && continue
 	    read -ra VALS <<< "$$row"
 	    pf=""

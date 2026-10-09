@@ -52,18 +52,23 @@ module tb;
     reg [DATA_WIDTH-1:0] test_values [0:MAX_SIZE-1];
     integer test_length;
     reg expected_bitonic;
+    reg [7:0] expected_peak_idx;
 
     // Reference model
     task check_bitonic;
         output is_bitonic;
+        output [7:0] peak_idx;
         integer k;
         integer phase;  // 0=init, 1=inc, 2=dec
         reg bitonic;
     begin
         bitonic = 1;
         phase = 0;
+        peak_idx = 0;
 
         for (k = 1; k < test_length && bitonic; k = k + 1) begin
+            if (test_values[k] > test_values[peak_idx])
+                peak_idx = k[7:0];
             if (test_values[k] > test_values[k-1]) begin
                 // Increasing
                 if (phase == 2) begin
@@ -109,9 +114,9 @@ module tb;
         in_last = 0;
         out_ready = 0;
 
-        repeat(5) @(posedge clk);
+        repeat(5) @(negedge clk);
         rst_n = 1;
-        repeat(2) @(posedge clk);
+        repeat(2) @(negedge clk);
 
         for (test_num = 0; test_num < num_tests; test_num = test_num + 1) begin
             // Read test case
@@ -120,12 +125,12 @@ module tb;
                 test_values[i] = dq.pop_front();
             end
 
-            check_bitonic(expected_bitonic);
+            check_bitonic(expected_bitonic, expected_peak_idx);
 
-            // Start
-            @(posedge clk);
+            // Drive controls on falling edges so they are stable when the DUT samples.
+            @(negedge clk);
             start = 1;
-            @(posedge clk);
+            @(negedge clk);
             start = 0;
 
             // Send input values
@@ -135,27 +140,33 @@ module tb;
                 in_last = (i == test_length - 1);
 
                 @(posedge clk);
-                while (!in_ready) @(posedge clk);
+                while (in_ready !== 1'b1) @(posedge clk);
+                // Hold this beat through its accepting edge before driving the next.
+                @(negedge clk);
             end
             in_valid = 0;
             in_last = 0;
 
-            // Wait for output
-            out_ready = 1;
-            @(posedge clk);
-            while (!out_valid) @(posedge clk);
+            // Check the settled result before acknowledging it.
+            while (out_valid !== 1'b1) @(negedge clk);
 
             if (out_is_bitonic !== expected_bitonic) begin
                 $display("Test %0d FAILED: Expected bitonic=%0d, Got bitonic=%0d",
                          test_num, expected_bitonic, out_is_bitonic);
+                errors = errors + 1;
+            end else if (expected_bitonic && out_peak_idx !== expected_peak_idx) begin
+                $display("Test %0d FAILED: Expected peak_idx=%0d, Got peak_idx=%0d",
+                         test_num, expected_peak_idx, out_peak_idx);
                 errors = errors + 1;
             end else begin
                 $display("Test %0d PASSED: is_bitonic=%0d, peak_idx=%0d",
                          test_num, out_is_bitonic, out_peak_idx);
             end
 
+            out_ready = 1;
+            @(negedge clk);
             out_ready = 0;
-            repeat(2) @(posedge clk);
+            repeat(2) @(negedge clk);
         end
 
         $display("\n====================");
@@ -165,6 +176,13 @@ module tb;
             $error("FAILED: %0d errors", errors);
         $display("====================\n");
 
+        $finish;
+    end
+
+    // A missing handshake must fail rather than hang the grader.
+    initial begin
+        #100000;
+        $error("Simulation TIMEOUT");
         $finish;
     end
 
